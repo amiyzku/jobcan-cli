@@ -16,47 +16,48 @@ use stamp_type::StampType;
 async fn main() {
     let cli = cli::Cli::parse();
 
-    if cli.email.is_none() {
-        eprintln!("JOBCAN_EMAIL must be set.");
+    let account_option = match &cli.sub_command {
+        cli::SubCommand::WorkStart(account_option)
+        | cli::SubCommand::WorkEnd(account_option)
+        | cli::SubCommand::RestStart(account_option)
+        | cli::SubCommand::RestEnd(account_option)
+        | cli::SubCommand::Status(account_option) => account_option,
+    };
+
+    if account_option.email.is_none() {
+        eprintln!("jobcan email is required.");
         exit(1);
     }
 
-    if cli.password.is_none() {
-        eprintln!("JOBCAN_PASSWORD must be set.");
+    if account_option.password.is_none() {
+        eprintln!("jobcan password is required.");
         exit(1);
     }
 
-    let account = Account::new(cli.email.unwrap(), cli.password.unwrap());
+    let account = Account::new(
+        account_option.email.as_ref().unwrap().to_string(),
+        account_option.password.as_ref().unwrap().to_string(),
+    );
     let jobcan = Jobcan::new(account);
 
     jobcan.login().await.unwrap();
 
+    let group_id = account_option.group_id.as_ref().map(|s| s.to_string());
+
     match cli.sub_command {
-        cli::SubCommand::WorkStart => {
-            jobcan
-                .stamp(StampType::WorkStart, cli.group_id)
-                .await
-                .unwrap();
+        cli::SubCommand::WorkStart(_) => {
+            jobcan.stamp(StampType::WorkStart, group_id).await.unwrap();
         }
-        cli::SubCommand::WorkEnd => {
-            jobcan
-                .stamp(StampType::WorkEnd, cli.group_id)
-                .await
-                .unwrap();
+        cli::SubCommand::WorkEnd(_) => {
+            jobcan.stamp(StampType::WorkEnd, group_id).await.unwrap();
         }
-        cli::SubCommand::RestStart => {
-            jobcan
-                .stamp(StampType::RestStart, cli.group_id)
-                .await
-                .unwrap();
+        cli::SubCommand::RestStart(_) => {
+            jobcan.stamp(StampType::RestStart, group_id).await.unwrap();
         }
-        cli::SubCommand::RestEnd => {
-            jobcan
-                .stamp(StampType::RestEnd, cli.group_id)
-                .await
-                .unwrap();
+        cli::SubCommand::RestEnd(_) => {
+            jobcan.stamp(StampType::RestEnd, group_id).await.unwrap();
         }
-        cli::SubCommand::Status => {
+        cli::SubCommand::Status(_) => {
             let status = jobcan.work_status().await.unwrap();
             println!("{}", status);
         }
