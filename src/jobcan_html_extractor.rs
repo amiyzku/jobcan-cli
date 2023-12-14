@@ -3,6 +3,22 @@ use scraper::Html;
 
 use crate::working_status::WorkingStatus;
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct Group {
+    id: String,
+    name: String,
+}
+
+impl Group {
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+}
+
 pub struct JobcanHtmlExtractor {}
 
 impl JobcanHtmlExtractor {
@@ -18,11 +34,11 @@ impl JobcanHtmlExtractor {
         Ok(token)
     }
 
-    pub fn working_status(text: &str) -> Result<WorkingStatus> {
+    pub fn working_status(text: &str) -> WorkingStatus {
         if text.contains("(勤務中)") {
-            Ok(WorkingStatus::Working)
+            WorkingStatus::Working
         } else {
-            Ok(WorkingStatus::NotWorking)
+            WorkingStatus::NotWorking
         }
     }
 
@@ -38,16 +54,22 @@ impl JobcanHtmlExtractor {
         Ok(token)
     }
 
-    pub fn group_ids(html: &Html) -> Result<Vec<String>> {
+    pub fn group(html: &Html) -> Result<Vec<Group>> {
         let selector = scraper::Selector::parse("#adit_group_id > option").unwrap();
         let options = html.select(&selector);
         let group_ids = options
             .map(|option| {
-                option
+                let id = option
                     .value()
                     .attr("value")
                     .expect("Failed to get value of group id")
-                    .to_string()
+                    .to_string();
+                let name = option
+                    .text()
+                    .next()
+                    .expect("Failed to get value of group name")
+                    .to_string();
+                Group { id, name }
             })
             .collect();
         Ok(group_ids)
@@ -59,7 +81,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn extract_authenticity_token() {
+    fn authenticity_token() {
         // Arrange
         let body = r#"""
             <html>
@@ -78,7 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_working_status_in_working() {
+    fn working_status_in_working() {
         // Arrange
         let body = r#"""
             <html>
@@ -92,11 +114,11 @@ mod tests {
         let status = JobcanHtmlExtractor::working_status(body);
 
         // Assert
-        assert!(status.unwrap() == WorkingStatus::Working);
+        assert!(status == WorkingStatus::Working);
     }
 
     #[test]
-    fn extract_working_status_in_not_working() {
+    fn working_status_in_not_working() {
         // Arrange
         let body = r#"""
             <html>
@@ -110,11 +132,11 @@ mod tests {
         let status = JobcanHtmlExtractor::working_status(body);
 
         // Assert
-        assert!(status.unwrap() == WorkingStatus::NotWorking);
+        assert!(status == WorkingStatus::NotWorking);
     }
 
     #[test]
-    fn extract_token() {
+    fn token() {
         // Arrange
         let body = r#"""
             <html>
@@ -133,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn extract_group_ids_with_multiple_options() {
+    fn group_with_multiple_options() {
         // Arrange
         let body = r#"""
             <html>
@@ -146,16 +168,26 @@ mod tests {
                 </body>
             </html>"""#;
         let html = scraper::Html::parse_document(&body);
+        let expected = vec![
+            Group {
+                id: "1".to_string(),
+                name: "1".to_string(),
+            },
+            Group {
+                id: "2".to_string(),
+                name: "2".to_string(),
+            },
+        ];
 
         // Act
-        let group_ids = JobcanHtmlExtractor::group_ids(&html);
+        let group_ids = JobcanHtmlExtractor::group(&html);
 
         // Assert
-        assert!(group_ids.unwrap() == vec!["1", "2"]);
+        assert!(group_ids.unwrap() == expected);
     }
 
     #[test]
-    fn extract_group_ids_without_option() {
+    fn group_without_option() {
         // Arrange
         let body = r#"""
             <html>
@@ -168,9 +200,9 @@ mod tests {
         let html = scraper::Html::parse_document(&body);
 
         // Act
-        let group_ids = JobcanHtmlExtractor::group_ids(&html);
+        let group_ids = JobcanHtmlExtractor::group(&html);
 
         // Assert
-        assert!(group_ids.unwrap() == Vec::<String>::new());
+        assert!(group_ids.unwrap() == Vec::<Group>::new());
     }
 }
