@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: ['master']
+    paths: ['*.rs', 'Cargo.toml']
+  pull_request:
+    branches: ['master']
+    paths: ['*.rs', 'Cargo.toml']
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Run tests
+        run: cargo test --verbose
