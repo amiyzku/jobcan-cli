@@ -4,7 +4,7 @@ use anyhow::Result;
 use reqwest::Response;
 
 use crate::{
-    account::Account, jobcan_html_extractor::JobcanHtmlExtractor, stamp_type::StampType,
+    account::Account, html_extractor::HtmlExtractor, stamp_type::StampType,
     working_status::WorkingStatus,
 };
 
@@ -34,7 +34,7 @@ impl Jobcan {
         let body = res.text().await.expect("Failed to get response body");
         let html = scraper::Html::parse_document(&body);
 
-        let token = JobcanHtmlExtractor::authenticity_token(&html)?;
+        let token = HtmlExtractor::authenticity_token(&html)?;
 
         let params = [
             ("authenticity_token", token.as_str()),
@@ -62,7 +62,7 @@ impl Jobcan {
     pub async fn work_status(&self) -> Result<WorkingStatus> {
         let res = self.fetch_attendance_page().await?;
         let body = res.text().await.expect("Failed to get response body");
-        let status = JobcanHtmlExtractor::working_status(&body)?;
+        let status = HtmlExtractor::working_status(&body)?;
 
         Ok(status)
     }
@@ -77,10 +77,10 @@ impl Jobcan {
         let body = res.text().await.expect("Failed to get response body");
         let html = scraper::Html::parse_document(&body);
 
-        let token = JobcanHtmlExtractor::token(&html)?;
+        let token = HtmlExtractor::token(&html)?;
 
         if group_id.is_none() {
-            let group = JobcanHtmlExtractor::group(&html)?;
+            let group = HtmlExtractor::group(&html)?;
 
             if group.len() == 0 {
                 anyhow::bail!("Failed to get group");

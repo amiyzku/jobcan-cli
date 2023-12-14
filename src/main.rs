@@ -1,7 +1,7 @@
 mod account;
 mod cli;
 mod jobcan;
-mod jobcan_html_extractor;
+mod html_extractor;
 mod stamp_type;
 mod working_status;
 

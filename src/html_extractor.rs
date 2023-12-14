@@ -20,9 +20,9 @@ impl Group {
     }
 }
 
-pub struct JobcanHtmlExtractor {}
+pub struct HtmlExtractor {}
 
-impl JobcanHtmlExtractor {
+impl HtmlExtractor {
     pub fn authenticity_token(html: &Html) -> Result<String> {
         let token = html
             .select(&scraper::Selector::parse("input[name=authenticity_token]").unwrap())
@@ -98,7 +98,7 @@ mod tests {
         let html = scraper::Html::parse_document(&body);
 
         // Act
-        let token = JobcanHtmlExtractor::authenticity_token(&html);
+        let token = HtmlExtractor::authenticity_token(&html);
 
         // Assert
         assert!(token.unwrap() == "token");
@@ -118,7 +118,7 @@ mod tests {
             </html>"""#;
 
         // Act
-        let status = JobcanHtmlExtractor::working_status(body).unwrap();
+        let status = HtmlExtractor::working_status(body).unwrap();
 
         // Assert
         assert!(status == WorkingStatus::Working);
@@ -138,7 +138,7 @@ mod tests {
             </html>"""#;
 
         // Act
-        let status = JobcanHtmlExtractor::working_status(body).unwrap();
+        let status = HtmlExtractor::working_status(body).unwrap();
 
         // Assert
         assert!(status == WorkingStatus::NotWorking);
@@ -157,7 +157,7 @@ mod tests {
         let html = scraper::Html::parse_document(&body);
 
         // Act
-        let token = JobcanHtmlExtractor::token(&html);
+        let token = HtmlExtractor::token(&html);
 
         // Assert
         assert!(token.unwrap() == "token");
@@ -189,7 +189,7 @@ mod tests {
         ];
 
         // Act
-        let group_ids = JobcanHtmlExtractor::group(&html);
+        let group_ids = HtmlExtractor::group(&html);
 
         // Assert
         assert!(group_ids.unwrap() == expected);
@@ -209,7 +209,7 @@ mod tests {
         let html = scraper::Html::parse_document(&body);
 
         // Act
-        let group_ids = JobcanHtmlExtractor::group(&html);
+        let group_ids = HtmlExtractor::group(&html);
 
         // Assert
         assert!(group_ids.unwrap() == Vec::<Group>::new());
