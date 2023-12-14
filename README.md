@@ -5,8 +5,8 @@ A tool to operate Jobcan from the command line.
 ## Usage
 
 ```bash
-$ jobcan-cli --help
-Usage: jobcan-cli <COMMAND>
+$ jobcan --help
+Usage: jobcan <COMMAND>
 
 Commands:
   work-start  Start work
@@ -21,15 +21,15 @@ Options:
   -V, --version  Print version
 ```
 
-Run 'jobcan-cli \<COMMAND> --help' for more information on a command.
+Run 'jobcan \<COMMAND> --help' for more information on a command.
 
-E.g. 'jobcan-cli work-start --help'
+E.g. 'jobcan work-start --help'
 
 ```bash
-$ jobcan-cli work-start --help
+$ jobcan work-start --help
 Start work
 
-Usage: jobcan-cli work-start [OPTIONS]
+Usage: jobcan work-start [OPTIONS]
 
 Options:
   -e, --email <EMAIL>        Account email. Default to $JOBCAN_EMAIL if not set.
