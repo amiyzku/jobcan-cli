@@ -17,10 +17,10 @@ async fn main() {
     let cli = cli::Cli::parse();
 
     let account_option = match &cli.sub_command {
-        cli::SubCommand::WorkStart(account_option)
-        | cli::SubCommand::WorkEnd(account_option)
-        | cli::SubCommand::RestStart(account_option)
-        | cli::SubCommand::RestEnd(account_option)
+        cli::SubCommand::WorkStart { account_option, .. }
+        | cli::SubCommand::WorkEnd { account_option, .. }
+        | cli::SubCommand::RestStart { account_option, .. }
+        | cli::SubCommand::RestEnd { account_option, .. }
         | cli::SubCommand::Status(account_option) => account_option,
     };
 
@@ -45,17 +45,29 @@ async fn main() {
     let group_id = account_option.group_id.as_ref().map(|s| s.to_string());
 
     match cli.sub_command {
-        cli::SubCommand::WorkStart(_) => {
-            jobcan.stamp(StampType::WorkStart, group_id).await.unwrap();
+        cli::SubCommand::WorkStart { night_shift, .. } => {
+            jobcan
+                .stamp(StampType::WorkStart, group_id, night_shift.into())
+                .await
+                .unwrap();
         }
-        cli::SubCommand::WorkEnd(_) => {
-            jobcan.stamp(StampType::WorkEnd, group_id).await.unwrap();
+        cli::SubCommand::WorkEnd { night_shift, .. } => {
+            jobcan
+                .stamp(StampType::WorkEnd, group_id, night_shift.into())
+                .await
+                .unwrap();
         }
-        cli::SubCommand::RestStart(_) => {
-            jobcan.stamp(StampType::RestStart, group_id).await.unwrap();
+        cli::SubCommand::RestStart { night_shift, .. } => {
+            jobcan
+                .stamp(StampType::RestStart, group_id, night_shift.into())
+                .await
+                .unwrap();
         }
-        cli::SubCommand::RestEnd(_) => {
-            jobcan.stamp(StampType::RestEnd, group_id).await.unwrap();
+        cli::SubCommand::RestEnd { night_shift, .. } => {
+            jobcan
+                .stamp(StampType::RestEnd, group_id, night_shift.into())
+                .await
+                .unwrap();
         }
         cli::SubCommand::Status(_) => {
             let status = jobcan.work_status().await.unwrap();

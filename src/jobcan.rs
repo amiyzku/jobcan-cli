@@ -1,11 +1,15 @@
+use std::process::exit;
+
 use anyhow::Result;
 use reqwest::Response;
-use scraper::Html;
 
-use crate::{user::User, working_status::WorkingStatus};
+use crate::{
+    account::Account, jobcan_html_extractor::JobcanHtmlExtractor, stamp_type::StampType,
+    working_status::WorkingStatus,
+};
 
-struct Jobcan {
-    user: User,
+pub struct Jobcan {
+    account: Account,
     http_client: reqwest::Client,
 }
 
@@ -13,10 +17,11 @@ impl Jobcan {
     const LOGIN_URL: &'static str = "https://id.jobcan.jp/users/sign_in";
     const EMPLOYEE_URL: &'static str = "https://ssl.jobcan.jp/employee";
     const ATTENDANCE_URL: &'static str = "https://ssl.jobcan.jp/employee/attendance";
+    const STAMP_URL: &'static str = "https://ssl.jobcan.jp/employee/index/adit";
 
-    pub fn new(user: User) -> Jobcan {
+    pub fn new(account: Account) -> Jobcan {
         Jobcan {
-            user,
+            account,
             http_client: reqwest::Client::builder()
                 .cookie_store(true)
                 .build()
@@ -29,14 +34,12 @@ impl Jobcan {
         let body = res.text().await.expect("Failed to get response body");
         let html = scraper::Html::parse_document(&body);
 
-        let token = self
-            .extract_authenticity_token(html)
-            .expect("Failed to get token");
+        let token = JobcanHtmlExtractor::authenticity_token(&html)?;
 
         let params = [
             ("authenticity_token", token.as_str()),
-            ("user[email]", self.user.email()),
-            ("user[password]", self.user.password()),
+            ("user[email]", self.account.email()),
+            ("user[password]", self.account.password()),
             ("app_key", "atd"),
             ("commit", "Login"),
         ];
@@ -56,21 +59,68 @@ impl Jobcan {
         }
     }
 
-    pub async fn work_start(&self) {
-        todo!()
-    }
-
-    pub async fn work_end(&self) {
-        todo!()
-    }
-
     pub async fn work_status(&self) -> Result<WorkingStatus> {
         let res = self.fetch_attendance_page().await?;
         let body = res.text().await.expect("Failed to get response body");
-        println!("{}", body);
-        let status = self.extract_working_status(body)?;
+        let status = JobcanHtmlExtractor::working_status(&body);
 
         Ok(status)
+    }
+
+    pub async fn stamp(
+        &self,
+        stamp_type: StampType,
+        mut group_id: Option<String>,
+        is_night_shift: bool,
+    ) -> Result<()> {
+        let res = self.fetch_employee_page().await?;
+        let body = res.text().await.expect("Failed to get response body");
+        let html = scraper::Html::parse_document(&body);
+
+        let token = JobcanHtmlExtractor::token(&html)?;
+
+        if group_id.is_none() {
+            let group = JobcanHtmlExtractor::group(&html)?;
+
+            if group.len() == 0 {
+                anyhow::bail!("Failed to get group");
+            } else if group.len() == 1 {
+                group_id = Some(group.get(0).unwrap().id().to_string());
+            } else {
+                group.iter().for_each(|g| {
+                    println!("Group name:{}, Group id:{}", g.name(), g.id());
+                });
+                println!("Please set JOBCAN_GROUP_ID or use `--group-id <GROUP_ID>` option");
+                exit(0);
+            }
+        }
+
+        let is_yakin = if is_night_shift { "1" } else { "0" };
+
+        if let Some(group_id) = group_id {
+            let params = [
+                ("is_yakin", is_yakin),
+                ("adit_item", &stamp_type.to_string()),
+                ("notice", ""),
+                ("token", token.as_ref()),
+                ("adit_group_id", &group_id),
+                ("_", ""),
+            ];
+
+            let res = self
+                .http_client
+                .post(Self::STAMP_URL)
+                .form(&params)
+                .send()
+                .await
+                .expect("Failed to request work end");
+
+            // TODO: 打刻成功したかどうかの判定を追加する
+
+            return Ok(());
+        }
+
+        anyhow::bail!("Unexpected error");
     }
 
     async fn fetch_login_page(&self) -> Result<Response> {
@@ -101,72 +151,5 @@ impl Jobcan {
                 anyhow::bail!("Failed to get attendance page: {}", e);
             }
         }
-    }
-
-    fn extract_authenticity_token(&self, html: Html) -> Result<String> {
-        let token = html
-            .select(&scraper::Selector::parse("input[name=authenticity_token]").unwrap())
-            .next()
-            .expect("Failed to find authenticity_token")
-            .value()
-            .attr("value")
-            .expect("Failed to get value of authenticity_token")
-            .to_string();
-        Ok(token)
-    }
-
-    fn extract_working_status(&self, text: String) -> Result<WorkingStatus> {
-        if text.contains("(勤務中)") {
-            Ok(WorkingStatus::Working)
-        } else {
-            // TODO:他の状態も追加する
-            anyhow::bail!("Failed to get working status");
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn extract_authenticity_token() {
-        // Arrange
-        let user = User::new("email", "password");
-        let sut = Jobcan::new(user);
-        let body = r#"""
-            <html>
-                <head></head>
-                <body>
-                    <input name="authenticity_token" value="token">
-                </body>
-            </html>"""#;
-        let html = scraper::Html::parse_document(&body);
-
-        // Act
-        let token = sut.extract_authenticity_token(html);
-
-        // Assert
-        assert!(token.unwrap() == "token");
-    }
-
-    #[tokio::test]
-    async fn extract_working_status() {
-        // Arrange
-        let user = User::new("email", "password");
-        let sut = Jobcan::new(user);
-        let body = r#"""
-            <html>
-                <head></head>
-                <body>
-                    <p>()</p>
-                </body>
-            </html>"""#;
-
-        // Act
-        let status = sut.extract_working_status(body.to_string());
-
-        // Assert
-        assert!(status.unwrap() == WorkingStatus::Working);
     }
 }

@@ -10,16 +10,40 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 pub enum SubCommand {
     #[clap(about = "Start work")]
-    WorkStart(AccountOption),
+    WorkStart {
+        #[clap(flatten)]
+        account_option: AccountOption,
+
+        #[clap(flatten)]
+        night_shift: NightShift,
+    },
 
     #[clap(about = "End work")]
-    WorkEnd(AccountOption),
+    WorkEnd {
+        #[clap(flatten)]
+        account_option: AccountOption,
+
+        #[clap(flatten)]
+        night_shift: NightShift,
+    },
 
     #[clap(about = "Start rest")]
-    RestStart(AccountOption),
+    RestStart {
+        #[clap(flatten)]
+        account_option: AccountOption,
+
+        #[clap(flatten)]
+        night_shift: NightShift,
+    },
 
     #[clap(about = "End rest")]
-    RestEnd(AccountOption),
+    RestEnd {
+        #[clap(flatten)]
+        account_option: AccountOption,
+
+        #[clap(flatten)]
+        night_shift: NightShift,
+    },
 
     #[clap(about = "Working status")]
     Status(AccountOption),
@@ -30,7 +54,7 @@ pub struct AccountOption {
     #[clap(
         short,
         long,
-        help = "Account email. Defaults to $JOBCAN_EMAIL if not set.",
+        help = "Account email. Default to $JOBCAN_EMAIL if not set.",
         env = "JOBCAN_EMAIL"
     )]
     pub email: Option<String>,
@@ -38,7 +62,7 @@ pub struct AccountOption {
     #[clap(
         short,
         long,
-        help = "Account password. Defaults to $JOBCAN_PASSWORD if not set.",
+        help = "Account password. Default to $JOBCAN_PASSWORD if not set.",
         env = "JOBCAN_PASSWORD"
     )]
     pub password: Option<String>,
@@ -46,8 +70,20 @@ pub struct AccountOption {
     #[clap(
         short,
         long,
-        help = "Group ID. Required if you belong to multiple groups. Defaults to $JOBCAN_GROUP_ID if not set.",
+        help = "Group ID. Required if you belong to multiple groups. Default to $JOBCAN_GROUP_ID if not set.",
         env = "JOBCAN_GROUP_ID"
     )]
     pub group_id: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct NightShift {
+    #[clap(short, long, default_value = "false", help = "Night-Shift mode.")]
+    pub night_shift: bool,
+}
+
+impl Into<bool> for NightShift {
+    fn into(self) -> bool {
+        self.night_shift
+    }
 }
