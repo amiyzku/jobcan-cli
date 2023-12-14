@@ -62,7 +62,7 @@ impl Jobcan {
     pub async fn work_status(&self) -> Result<WorkingStatus> {
         let res = self.fetch_attendance_page().await?;
         let body = res.text().await.expect("Failed to get response body");
-        let status = JobcanHtmlExtractor::working_status(&body);
+        let status = JobcanHtmlExtractor::working_status(&body)?;
 
         Ok(status)
     }

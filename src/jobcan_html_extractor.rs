@@ -1,4 +1,5 @@
 use anyhow::Result;
+use regex::Regex;
 use scraper::Html;
 
 use crate::working_status::WorkingStatus;
@@ -34,11 +35,15 @@ impl JobcanHtmlExtractor {
         Ok(token)
     }
 
-    pub fn working_status(text: &str) -> WorkingStatus {
-        if text.contains("(勤務中)") {
-            WorkingStatus::Working
-        } else {
-            WorkingStatus::NotWorking
+    pub fn working_status(text: &str) -> Result<WorkingStatus> {
+        let re = Regex::new(r#"var current_status = "(.*?)";"#).unwrap();
+        match re.captures(text) {
+            Some(caps) => match caps.get(1).unwrap().as_str() {
+                "returned_home" => Ok(WorkingStatus::NotWorking),
+                "working" => Ok(WorkingStatus::Working),
+                _ => anyhow::bail!("Unknown working status"),
+            },
+            None => anyhow::bail!("Failed to get working status"),
         }
     }
 
@@ -106,12 +111,14 @@ mod tests {
             <html>
                 <head></head>
                 <body>
-                    <p>(勤務中)</p>
+                    <script>
+                        var current_status = "working";
+                    </script>
                 </body>
             </html>"""#;
 
         // Act
-        let status = JobcanHtmlExtractor::working_status(body);
+        let status = JobcanHtmlExtractor::working_status(body).unwrap();
 
         // Assert
         assert!(status == WorkingStatus::Working);
@@ -124,12 +131,14 @@ mod tests {
             <html>
                 <head></head>
                 <body>
-                    <p></p>
+                    <script>
+                        var current_status = "returned_home";
+                    </script>
                 </body>
             </html>"""#;
 
         // Act
-        let status = JobcanHtmlExtractor::working_status(body);
+        let status = JobcanHtmlExtractor::working_status(body).unwrap();
 
         // Assert
         assert!(status == WorkingStatus::NotWorking);
