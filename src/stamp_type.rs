@@ -1,5 +1,3 @@
-use std::fmt::{Display, Formatter};
-
 use serde::Deserialize;
 
 pub enum StampType {
