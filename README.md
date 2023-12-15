@@ -1,6 +1,6 @@
-# Jobcan cli
+# Jobcan-cli
 
-A tool to operate Jobcan from the command line.
+A command line tool to operate Jobcan.
 
 ## Usage
 
