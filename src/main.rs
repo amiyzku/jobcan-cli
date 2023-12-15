@@ -1,7 +1,7 @@
 mod account;
 mod cli;
-mod jobcan;
 mod html_extractor;
+mod jobcan;
 mod stamp_type;
 mod working_status;
 
@@ -16,12 +16,30 @@ use stamp_type::StampType;
 async fn main() {
     let cli = cli::Cli::parse();
 
-    let account_option = match &cli.sub_command {
-        cli::SubCommand::WorkStart { account_option, .. }
-        | cli::SubCommand::WorkEnd { account_option, .. }
-        | cli::SubCommand::RestStart { account_option, .. }
-        | cli::SubCommand::RestEnd { account_option, .. }
-        | cli::SubCommand::Status(account_option) => account_option,
+    let (account_option, group_id) = match &cli.sub_command {
+        cli::SubCommand::WorkStart {
+            account_option,
+            group_id,
+            ..
+        }
+        | cli::SubCommand::WorkEnd {
+            account_option,
+            group_id,
+            ..
+        }
+        | cli::SubCommand::RestStart {
+            account_option,
+            group_id,
+            ..
+        }
+        | cli::SubCommand::RestEnd {
+            account_option,
+            group_id,
+            ..
+        } => (account_option, Some(group_id)),
+        cli::SubCommand::Status(account_option) | cli::SubCommand::ListGroups(account_option) => {
+            (account_option, None)
+        }
     };
 
     if account_option.email.is_none() {
@@ -42,7 +60,7 @@ async fn main() {
 
     jobcan.login().await.unwrap();
 
-    let group_id = account_option.group_id.as_ref().map(|s| s.to_string());
+    let group_id = group_id.map(|s| s.group_id.as_ref().unwrap().clone());
 
     match cli.sub_command {
         cli::SubCommand::WorkStart { night_shift, .. } => {
@@ -72,6 +90,12 @@ async fn main() {
         cli::SubCommand::Status(_) => {
             let status = jobcan.work_status().await.unwrap();
             println!("{}", status);
+        }
+        cli::SubCommand::ListGroups(_) => {
+            let groups = jobcan.list_groups().await.unwrap();
+            for group in groups {
+                println!("{}: {}", group.id(), group.name());
+            }
         }
     }
 
