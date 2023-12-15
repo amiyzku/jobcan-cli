@@ -9,12 +9,13 @@ $ jobcan --help
 Usage: jobcan <COMMAND>
 
 Commands:
-  work-start  Start work
-  work-end    End work
-  rest-start  Start rest
-  rest-end    End rest
-  status      Working status
-  help        Print this message or the help of the given subcommand(s)
+  clock-in     Login to Jobcan and clock in
+  clock-out    Login to Jobcan and clock out
+  start-break  Login to Jobcan and start break
+  end-break    Login to Jobcan and end break
+  status       Login to Jobcan and get current working status
+  list-groups  Login to Jobcan and list groups which you belong to
+  help         Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
@@ -27,14 +28,14 @@ E.g. 'jobcan work-start --help'
 
 ```bash
 $ jobcan work-start --help
-Start work
+Login to Jobcan and clock in
 
-Usage: jobcan work-start [OPTIONS]
+Usage: jobcan clock-in [OPTIONS]
 
 Options:
   -e, --email <EMAIL>        Account email. Default to $JOBCAN_EMAIL if not set.
   -p, --password <PASSWORD>  Account password. Default to $JOBCAN_PASSWORD if not set.
-  -g, --group-id <GROUP_ID>  Group ID. Required if you belong to multiple groups. Default to $JOBCAN_GROUP_ID if not set.
+  -g, --group-id <GROUP_ID>  Group ID. Default to $JOBCAN_GROUP_ID if not set.
   -n, --night-shift          Night-Shift mode.
   -h, --help                 Print help
 ```
