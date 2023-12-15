@@ -1,10 +1,10 @@
-use std::process::exit;
-
 use anyhow::Result;
 use reqwest::Response;
 
 use crate::{
-    account::Account, html_extractor::HtmlExtractor, stamp_type::StampType,
+    account::Account,
+    html_extractor::{Group, HtmlExtractor},
+    stamp_type::{self, StampType},
     working_status::WorkingStatus,
 };
 
@@ -16,7 +16,6 @@ pub struct Jobcan {
 impl Jobcan {
     const LOGIN_URL: &'static str = "https://id.jobcan.jp/users/sign_in";
     const EMPLOYEE_URL: &'static str = "https://ssl.jobcan.jp/employee";
-    const ATTENDANCE_URL: &'static str = "https://ssl.jobcan.jp/employee/attendance";
     const STAMP_URL: &'static str = "https://ssl.jobcan.jp/employee/index/adit";
 
     pub fn new(account: Account) -> Jobcan {
@@ -59,18 +58,10 @@ impl Jobcan {
         }
     }
 
-    pub async fn work_status(&self) -> Result<WorkingStatus> {
-        let res = self.fetch_attendance_page().await?;
-        let body = res.text().await.expect("Failed to get response body");
-        let status = HtmlExtractor::working_status(&body)?;
-
-        Ok(status)
-    }
-
     pub async fn stamp(
         &self,
         stamp_type: StampType,
-        mut group_id: Option<String>,
+        group_id: &str,
         is_night_shift: bool,
     ) -> Result<()> {
         let res = self.fetch_employee_page().await?;
@@ -78,49 +69,68 @@ impl Jobcan {
         let html = scraper::Html::parse_document(&body);
 
         let token = HtmlExtractor::token(&html)?;
-
-        if group_id.is_none() {
-            let group = HtmlExtractor::group(&html)?;
-
-            if group.len() == 0 {
-                anyhow::bail!("Failed to get group");
-            } else if group.len() == 1 {
-                group_id = Some(group.get(0).unwrap().id().to_string());
-            } else {
-                group.iter().for_each(|g| {
-                    println!("Group name:{}, Group id:{}", g.name(), g.id());
-                });
-                println!("Please set JOBCAN_GROUP_ID or use `--group-id <GROUP_ID>` option");
-                exit(0);
-            }
-        }
-
         let is_yakin = if is_night_shift { "1" } else { "0" };
+        let params = [
+            ("is_yakin", is_yakin),
+            ("adit_item", &stamp_type.to_string()),
+            ("notice", ""),
+            ("token", token.as_ref()),
+            ("adit_group_id", &group_id),
+            ("_", ""),
+        ];
 
-        if let Some(group_id) = group_id {
-            let params = [
-                ("is_yakin", is_yakin),
-                ("adit_item", &stamp_type.to_string()),
-                ("notice", ""),
-                ("token", token.as_ref()),
-                ("adit_group_id", &group_id),
-                ("_", ""),
-            ];
+        let res = self
+            .http_client
+            .post(Self::STAMP_URL)
+            .form(&params)
+            .send()
+            .await
+            .expect("Failed to request work end");
 
-            let res = self
-                .http_client
-                .post(Self::STAMP_URL)
-                .form(&params)
-                .send()
+        if res.headers().get("content-type").unwrap() == "application/json" {
+            let json = res
+                .json::<stamp_type::Response>()
                 .await
-                .expect("Failed to request work end");
+                .expect("Failed to parse response to json");
 
-            // TODO: 打刻成功したかどうかの判定を追加する
-
-            return Ok(());
+            if json == stamp_type.expected_response() {
+                Ok(())
+            } else {
+                anyhow::bail!("Failed to stamp");
+            }
+        } else {
+            anyhow::bail!("Failed to stamp");
         }
+    }
 
-        anyhow::bail!("Unexpected error");
+    pub async fn work_status(&self) -> Result<WorkingStatus> {
+        let res = self
+            .fetch_employee_page()
+            .await
+            .expect("Failed to get attendance page");
+        let body = res.text().await.expect("Failed to get response body");
+        let status = HtmlExtractor::working_status(&body).expect("Failed to get working status");
+
+        Ok(status)
+    }
+
+    pub async fn list_groups(&self) -> Result<Vec<Group>> {
+        let res = self.fetch_employee_page().await?;
+        let body = res.text().await.expect("Failed to get response body");
+        let html = scraper::Html::parse_document(&body);
+
+        let groups = HtmlExtractor::groups(&html)?;
+
+        Ok(groups)
+    }
+
+    pub async fn default_group_id(&self) -> Result<String> {
+        let res = self.fetch_employee_page().await?;
+        let body = res.text().await.expect("Failed to get response body");
+
+        let group_id = HtmlExtractor::default_group_id(&body)?;
+
+        Ok(group_id)
     }
 
     async fn fetch_login_page(&self) -> Result<Response> {
@@ -139,16 +149,6 @@ impl Jobcan {
             Ok(res) => Ok(res),
             Err(e) => {
                 anyhow::bail!("Failed to get employee page: {}", e);
-            }
-        }
-    }
-
-    async fn fetch_attendance_page(&self) -> Result<Response> {
-        let res = self.http_client.get(Self::ATTENDANCE_URL).send().await;
-        match res {
-            Ok(res) => Ok(res),
-            Err(e) => {
-                anyhow::bail!("Failed to get attendance page: {}", e);
             }
         }
     }

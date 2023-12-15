@@ -16,88 +16,128 @@ use stamp_type::StampType;
 async fn main() {
     let cli = cli::Cli::parse();
 
-    let (account_option, group_id) = match &cli.sub_command {
+    match cli.sub_command {
         cli::SubCommand::WorkStart {
             account_option,
             group_id,
-            ..
+            night_shift,
+        } => {
+            run_stamp(account_option, group_id, night_shift, StampType::WorkStart).await;
         }
-        | cli::SubCommand::WorkEnd {
+        cli::SubCommand::WorkEnd {
             account_option,
             group_id,
-            ..
+            night_shift,
+        } => {
+            run_stamp(account_option, group_id, night_shift, StampType::WorkEnd).await;
         }
-        | cli::SubCommand::RestStart {
+        cli::SubCommand::RestStart {
             account_option,
             group_id,
-            ..
+            night_shift,
+        } => {
+            run_stamp(account_option, group_id, night_shift, StampType::RestStart).await;
         }
-        | cli::SubCommand::RestEnd {
+        cli::SubCommand::RestEnd {
             account_option,
             group_id,
-            ..
-        } => (account_option, Some(group_id)),
-        cli::SubCommand::Status(account_option) | cli::SubCommand::ListGroups(account_option) => {
-            (account_option, None)
+            night_shift,
+        } => {
+            run_stamp(account_option, group_id, night_shift, StampType::RestEnd).await;
+        }
+        cli::SubCommand::Status(account_option) => {
+            run_status(account_option).await;
+        }
+        cli::SubCommand::ListGroups(account_option) => {
+            run_list_groups(account_option).await;
         }
     };
 
-    if account_option.email.is_none() {
-        eprintln!("jobcan email is required.");
-        exit(1);
-    }
+    exit(0);
+}
 
-    if account_option.password.is_none() {
-        eprintln!("jobcan password is required.");
-        exit(1);
-    }
-
-    let account = Account::new(
-        account_option.email.as_ref().unwrap().to_string(),
-        account_option.password.as_ref().unwrap().to_string(),
-    );
+async fn run_stamp(
+    account_option: cli::Account,
+    group_id: cli::GroupID,
+    night_shift: cli::NightShift,
+    stamp_type: StampType,
+) {
+    let account = account_from_cli(account_option);
     let jobcan = Jobcan::new(account);
 
-    jobcan.login().await.unwrap();
+    jobcan.login().await.expect("Failed to login");
 
-    let group_id = group_id.map(|s| s.group_id.as_ref().unwrap().clone());
+    let group_id: String = match group_id.group_id {
+        Some(group_id) => group_id,
+        None => jobcan
+            .default_group_id()
+            .await
+            .expect("Failed to get default group id"),
+    };
 
-    match cli.sub_command {
-        cli::SubCommand::WorkStart { night_shift, .. } => {
-            jobcan
-                .stamp(StampType::WorkStart, group_id, night_shift.into())
-                .await
-                .unwrap();
+    jobcan
+        .stamp(stamp_type, &group_id, night_shift.into())
+        .await
+        .expect("Failed to stamp");
+}
+
+async fn run_status(account_option: cli::Account) {
+    let account = account_from_cli(account_option);
+    let jobcan = Jobcan::new(account);
+
+    jobcan.login().await.expect("Failed to login");
+
+    let status = jobcan
+        .work_status()
+        .await
+        .expect("Failed to get work status");
+
+    println!("{}", status);
+}
+
+async fn run_list_groups(account_option: cli::Account) {
+    let account = account_from_cli(account_option);
+    let jobcan = Jobcan::new(account);
+
+    jobcan.login().await.expect("Failed to login");
+
+    let groups = jobcan
+        .list_groups()
+        .await
+        .expect("Failed to get group list");
+
+    for group in groups {
+        println!("GroupID:{}, GroupName:{}", group.id(), group.name());
+    }
+}
+
+fn account_from_cli(account_option: cli::Account) -> Account {
+    match account_option {
+        cli::Account {
+            email: Some(email),
+            password: Some(password),
+        } => Account::new(email, password),
+        cli::Account {
+            email: Some(_),
+            password: None,
+        } => {
+            eprintln!("jobcan password is required.");
+            exit(1);
         }
-        cli::SubCommand::WorkEnd { night_shift, .. } => {
-            jobcan
-                .stamp(StampType::WorkEnd, group_id, night_shift.into())
-                .await
-                .unwrap();
+        cli::Account {
+            email: None,
+            password: Some(_),
+        } => {
+            eprintln!("jobcan email is required.");
+            exit(1);
         }
-        cli::SubCommand::RestStart { night_shift, .. } => {
-            jobcan
-                .stamp(StampType::RestStart, group_id, night_shift.into())
-                .await
-                .unwrap();
-        }
-        cli::SubCommand::RestEnd { night_shift, .. } => {
-            jobcan
-                .stamp(StampType::RestEnd, group_id, night_shift.into())
-                .await
-                .unwrap();
-        }
-        cli::SubCommand::Status(_) => {
-            let status = jobcan.work_status().await.unwrap();
-            println!("{}", status);
-        }
-        cli::SubCommand::ListGroups(_) => {
-            let groups = jobcan.list_groups().await.unwrap();
-            for group in groups {
-                println!("{}: {}", group.id(), group.name());
-            }
+        cli::Account {
+            email: None,
+            password: None,
+        } => {
+            eprintln!("jobcan email is required.");
+            eprintln!("jobcan password is required.");
+            exit(1);
         }
     }
-
-    exit(0);
 }

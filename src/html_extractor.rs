@@ -41,6 +41,7 @@ impl HtmlExtractor {
             Some(caps) => match caps.get(1).unwrap().as_str() {
                 "returned_home" => Ok(WorkingStatus::NotWorking),
                 "working" => Ok(WorkingStatus::Working),
+                "resting" => Ok(WorkingStatus::Resting),
                 _ => anyhow::bail!("Unknown working status"),
             },
             None => anyhow::bail!("Failed to get working status"),
@@ -59,7 +60,7 @@ impl HtmlExtractor {
         Ok(token)
     }
 
-    pub fn group(html: &Html) -> Result<Vec<Group>> {
+    pub fn groups(html: &Html) -> Result<Vec<Group>> {
         let selector = scraper::Selector::parse("#adit_group_id > option").unwrap();
         let options = html.select(&selector);
         let group_ids = options
@@ -78,6 +79,14 @@ impl HtmlExtractor {
             })
             .collect();
         Ok(group_ids)
+    }
+
+    pub fn default_group_id(text: &str) -> Result<String> {
+        let re = Regex::new(r#"var defaultAditGroupId = (.*?);"#).unwrap();
+        match re.captures(text) {
+            Some(caps) => Ok(caps.get(1).unwrap().as_str().to_string()),
+            None => anyhow::bail!("Failed to get default id"),
+        }
     }
 }
 
@@ -189,7 +198,7 @@ mod tests {
         ];
 
         // Act
-        let group_ids = HtmlExtractor::group(&html);
+        let group_ids = HtmlExtractor::groups(&html);
 
         // Assert
         assert!(group_ids.unwrap() == expected);
@@ -209,9 +218,48 @@ mod tests {
         let html = scraper::Html::parse_document(&body);
 
         // Act
-        let group_ids = HtmlExtractor::group(&html);
+        let group_ids = HtmlExtractor::groups(&html);
 
         // Assert
         assert!(group_ids.unwrap() == Vec::<Group>::new());
+    }
+
+    #[test]
+    fn default_group_id_with_expected_text() {
+        // Arrange
+        let body = r#"""
+            <html>
+                <head></head>
+                <body>
+                    <script>
+                        var defaultAditGroupId = 1;
+                    </script>
+                </body>
+            </html>"""#;
+
+        // Act
+        let status = HtmlExtractor::default_group_id(body).unwrap();
+
+        // Assert
+        assert!(status == "1".to_string());
+    }
+
+    #[test]
+    fn default_group_id_with_unexpected_text() {
+        // Arrange
+        let body = r#"""
+            <html>
+                <head></head>
+                <body>
+                    <script>
+                    </script>
+                </body>
+            </html>"""#;
+
+        // Act
+        let status = HtmlExtractor::default_group_id(body);
+
+        // Assert
+        assert!(status.is_err());
     }
 }

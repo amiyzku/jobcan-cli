@@ -648,6 +648,7 @@ dependencies = [
  "regex",
  "reqwest",
  "scraper",
+ "serde",
  "tokio",
 ]
 

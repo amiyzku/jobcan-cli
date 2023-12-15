@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum WorkingStatus {
     Working,
     NotWorking,
+    Resting,
 }
 
 impl Display for WorkingStatus {
@@ -11,6 +12,7 @@ impl Display for WorkingStatus {
         match self {
             WorkingStatus::Working => write!(f, "Working"),
             WorkingStatus::NotWorking => write!(f, "Not working"),
+            WorkingStatus::Resting => write!(f, "Resting"),
         }
     }
 }
