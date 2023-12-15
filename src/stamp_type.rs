@@ -3,19 +3,19 @@ use std::fmt::{Display, Formatter};
 use serde::Deserialize;
 
 pub enum StampType {
-    WorkStart,
-    WorkEnd,
-    RestStart,
-    RestEnd,
+    ClockIn,
+    ClockOut,
+    StartBreak,
+    EndBreak,
 }
 
-impl Display for StampType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl StampType {
+    pub fn to_request_params(&self) -> String {
         match self {
-            StampType::WorkStart => write!(f, "work_start"),
-            StampType::WorkEnd => write!(f, "work_end"),
-            StampType::RestStart => write!(f, "rest_start"),
-            StampType::RestEnd => write!(f, "rest_end"),
+            StampType::ClockIn => "work_start".to_string(),
+            StampType::ClockOut => "work_end".to_string(),
+            StampType::StartBreak => "rest_start".to_string(),
+            StampType::EndBreak => "rest_end".to_string(),
         }
     }
 }
@@ -24,19 +24,19 @@ impl StampType {
     pub fn expected_response(&self) -> Response {
         // Note: Ignore `Response.result` and `Response.state`
         match self {
-            StampType::WorkStart => Response {
+            StampType::ClockIn => Response {
                 current_status: "working".to_string(),
                 ..Default::default()
             },
-            StampType::WorkEnd => Response {
+            StampType::ClockOut => Response {
                 current_status: "returned_home".to_string(),
                 ..Default::default()
             },
-            StampType::RestStart => Response {
+            StampType::StartBreak => Response {
                 current_status: "resting".to_string(),
                 ..Default::default()
             },
-            StampType::RestEnd => Response {
+            StampType::EndBreak => Response {
                 current_status: "working".to_string(),
                 ..Default::default()
             },

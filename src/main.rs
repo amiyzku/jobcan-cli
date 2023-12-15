@@ -17,33 +17,33 @@ async fn main() {
     let cli = cli::Cli::parse();
 
     match cli.sub_command {
-        cli::SubCommand::WorkStart {
+        cli::SubCommand::ClockIn {
             account_option,
             group_id,
             night_shift,
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::WorkStart).await;
+            run_stamp(account_option, group_id, night_shift, StampType::ClockIn).await;
         }
-        cli::SubCommand::WorkEnd {
+        cli::SubCommand::ClockOut {
             account_option,
             group_id,
             night_shift,
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::WorkEnd).await;
+            run_stamp(account_option, group_id, night_shift, StampType::ClockOut).await;
         }
-        cli::SubCommand::RestStart {
+        cli::SubCommand::StartBreak {
             account_option,
             group_id,
             night_shift,
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::RestStart).await;
+            run_stamp(account_option, group_id, night_shift, StampType::StartBreak).await;
         }
-        cli::SubCommand::RestEnd {
+        cli::SubCommand::EndBreak {
             account_option,
             group_id,
             night_shift,
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::RestEnd).await;
+            run_stamp(account_option, group_id, night_shift, StampType::EndBreak).await;
         }
         cli::SubCommand::Status(account_option) => {
             run_status(account_option).await;

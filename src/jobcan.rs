@@ -72,7 +72,7 @@ impl Jobcan {
         let is_yakin = if is_night_shift { "1" } else { "0" };
         let params = [
             ("is_yakin", is_yakin),
-            ("adit_item", &stamp_type.to_string()),
+            ("adit_item", &stamp_type.to_request_params()),
             ("notice", ""),
             ("token", token.as_ref()),
             ("adit_group_id", &group_id),

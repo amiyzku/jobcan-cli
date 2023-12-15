@@ -9,8 +9,8 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum SubCommand {
-    #[clap(about = "Start work")]
-    WorkStart {
+    #[clap(about = "Login to Jobcan and clock in")]
+    ClockIn {
         #[clap(flatten)]
         account_option: Account,
 
@@ -21,8 +21,8 @@ pub enum SubCommand {
         night_shift: NightShift,
     },
 
-    #[clap(about = "End work")]
-    WorkEnd {
+    #[clap(about = "Login to Jobcan and clock out")]
+    ClockOut {
         #[clap(flatten)]
         account_option: Account,
 
@@ -33,8 +33,8 @@ pub enum SubCommand {
         night_shift: NightShift,
     },
 
-    #[clap(about = "Start rest")]
-    RestStart {
+    #[clap(about = "Login to Jobcan and start break")]
+    StartBreak {
         #[clap(flatten)]
         account_option: Account,
 
@@ -45,8 +45,8 @@ pub enum SubCommand {
         night_shift: NightShift,
     },
 
-    #[clap(about = "End rest")]
-    RestEnd {
+    #[clap(about = "Login to Jobcan and end break")]
+    EndBreak {
         #[clap(flatten)]
         account_option: Account,
 
@@ -57,10 +57,10 @@ pub enum SubCommand {
         night_shift: NightShift,
     },
 
-    #[clap(about = "Working status")]
+    #[clap(about = "Login to Jobcan and get current working status")]
     Status(Account),
 
-    #[clap(about = "List groups")]
+    #[clap(about = "Login to Jobcan and list groups which you belong to")]
     ListGroups(Account),
 }
 
