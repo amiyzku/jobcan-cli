@@ -35,7 +35,8 @@ Usage: jobcan clock-in [OPTIONS]
 Options:
   -e, --email <EMAIL>        Account email. Default to $JOBCAN_EMAIL if not set.
   -p, --password <PASSWORD>  Account password. Default to $JOBCAN_PASSWORD if not set.
-  -g, --group-id <GROUP_ID>  Group ID. Default to $JOBCAN_GROUP_ID if not set.
-  -n, --night-shift          Night-Shift mode.
+      --group-id <GROUP_ID>  Group ID. Default to $JOBCAN_GROUP_ID if not set.
+      --night-shift          Night-Shift mode.
+      --notes <NOTES>        Notes to be added to the stamp.
   -h, --help                 Print help
 ```
