@@ -2,11 +2,8 @@ name: Release
 
 on:
   push:
-    branches:
-      - 'master'
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 jobs:
   release:
@@ -28,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Check if the version of git tag matches the version of Cargo.toml
         run: |
