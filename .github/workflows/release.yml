@@ -1,0 +1,67 @@
+name: Release
+
+on:
+  workflow_run: 
+    workflows:
+      - CI
+    types:
+      - completed
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    strategy:
+      matrix:
+        target:
+          - aarch64-apple-darwin
+          - aarch64-unknown-linux-gnu
+          - arm-unknown-linux-gnueabihf
+          - arm-unknown-linux-musleabihf
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-gnu
+          - x86_64-pc-windows-msvc
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if the version of git tag matches the version of Cargo.toml
+        run: |
+          if [ "$(git tag --points-at HEAD)" != "$(grep '^version' Cargo.toml | cut -d '"' -f 2)" ]; then
+            echo "git tag version is not same Cargo.toml"
+            exit 1
+          fi
+
+      - name: Set version
+        run: |
+          VERSION=$(grep '^version' Cargo.toml | cut -d '"' -f 2)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Found version: $VERSION"
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.target }}/release/jobcan
+          tag_name: ${{ github.env.VERSION }}
+          name: Release ${{ github.env.VERSION }}
+          body: |
+            # Release ${{ github.env.VERSION }}
+          draft: true
+          prerelease: false
