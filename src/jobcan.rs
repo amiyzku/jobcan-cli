@@ -87,7 +87,11 @@ impl Jobcan {
             .await
             .expect("Failed to request work end");
 
-        if res.headers().get("content-type").unwrap() == "application/json" {
+        if let Some(content_type) = res.headers().get("content-type") {
+            if content_type != "application/json" {
+                anyhow::bail!("Failed to stamp");
+            }
+
             let json = res
                 .json::<stamp_type::Response>()
                 .await
