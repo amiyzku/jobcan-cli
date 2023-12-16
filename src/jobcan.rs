@@ -63,6 +63,7 @@ impl Jobcan {
         stamp_type: StampType,
         group_id: &str,
         is_night_shift: bool,
+        note: &str,
     ) -> Result<()> {
         let res = self.fetch_employee_page().await?;
         let body = res.text().await.expect("Failed to get response body");
@@ -73,9 +74,9 @@ impl Jobcan {
         let params = [
             ("is_yakin", is_yakin),
             ("adit_item", &stamp_type.to_request_params()),
-            ("notice", ""),
+            ("notice", note),
             ("token", token.as_ref()),
-            ("adit_group_id", &group_id),
+            ("adit_group_id", group_id),
             ("_", ""),
         ];
 

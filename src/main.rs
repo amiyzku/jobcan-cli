@@ -21,29 +21,65 @@ async fn main() {
             account_option,
             group_id,
             night_shift,
+            note,
+            ..
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::ClockIn).await;
+            run_stamp(
+                account_option,
+                group_id,
+                night_shift,
+                note,
+                StampType::ClockIn,
+            )
+            .await;
         }
         cli::SubCommand::ClockOut {
             account_option,
             group_id,
             night_shift,
+            note,
+            ..
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::ClockOut).await;
+            run_stamp(
+                account_option,
+                group_id,
+                night_shift,
+                note,
+                StampType::ClockOut,
+            )
+            .await;
         }
         cli::SubCommand::StartBreak {
             account_option,
             group_id,
             night_shift,
+            note,
+            ..
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::StartBreak).await;
+            run_stamp(
+                account_option,
+                group_id,
+                night_shift,
+                note,
+                StampType::StartBreak,
+            )
+            .await;
         }
         cli::SubCommand::EndBreak {
             account_option,
             group_id,
             night_shift,
+            note,
+            ..
         } => {
-            run_stamp(account_option, group_id, night_shift, StampType::EndBreak).await;
+            run_stamp(
+                account_option,
+                group_id,
+                night_shift,
+                note,
+                StampType::EndBreak,
+            )
+            .await;
         }
         cli::SubCommand::Status(account_option) => {
             run_status(account_option).await;
@@ -60,6 +96,7 @@ async fn run_stamp(
     account_option: cli::Account,
     group_id: cli::GroupID,
     night_shift: cli::NightShift,
+    note: cli::Notes,
     stamp_type: StampType,
 ) {
     let account = account_from_cli(account_option);
@@ -75,8 +112,10 @@ async fn run_stamp(
             .expect("Failed to get default group id"),
     };
 
+    let note: String = note.into();
+
     jobcan
-        .stamp(stamp_type, &group_id, night_shift.into())
+        .stamp(stamp_type, &group_id, night_shift.into(), &note)
         .await
         .expect("Failed to stamp");
 }

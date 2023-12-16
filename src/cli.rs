@@ -19,6 +19,9 @@ pub enum SubCommand {
 
         #[clap(flatten)]
         night_shift: NightShift,
+
+        #[clap(flatten)]
+        note: Notes,
     },
 
     #[clap(about = "Login to Jobcan and clock out")]
@@ -31,6 +34,9 @@ pub enum SubCommand {
 
         #[clap(flatten)]
         night_shift: NightShift,
+
+        #[clap(flatten)]
+        note: Notes,
     },
 
     #[clap(about = "Login to Jobcan and start break")]
@@ -43,6 +49,9 @@ pub enum SubCommand {
 
         #[clap(flatten)]
         night_shift: NightShift,
+
+        #[clap(flatten)]
+        note: Notes,
     },
 
     #[clap(about = "Login to Jobcan and end break")]
@@ -55,6 +64,9 @@ pub enum SubCommand {
 
         #[clap(flatten)]
         night_shift: NightShift,
+
+        #[clap(flatten)]
+        note: Notes,
     },
 
     #[clap(about = "Login to Jobcan and get current working status")]
@@ -86,7 +98,6 @@ pub struct Account {
 #[derive(Debug, Args)]
 pub struct GroupID {
     #[clap(
-        short,
         long,
         help = "Group ID. Default to $JOBCAN_GROUP_ID if not set.",
         env = "JOBCAN_GROUP_ID"
@@ -96,12 +107,24 @@ pub struct GroupID {
 
 #[derive(Debug, Args)]
 pub struct NightShift {
-    #[clap(short, long, default_value = "false", help = "Night-Shift mode.")]
+    #[clap(long, default_value = "false", help = "Night-Shift mode.")]
     pub night_shift: bool,
 }
 
 impl Into<bool> for NightShift {
     fn into(self) -> bool {
         self.night_shift
+    }
+}
+
+#[derive(Debug, Args)]
+pub struct Notes {
+    #[clap(long, default_value = "", help = "Notes to be added to the stamp.")]
+    pub notes: String,
+}
+
+impl Into<String> for Notes {
+    fn into(self) -> String {
+        self.notes
     }
 }
