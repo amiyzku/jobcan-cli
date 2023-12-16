@@ -1,16 +1,12 @@
 name: Release
 
 on:
-  workflow_run: 
-    workflows:
-      - CI
-    types:
-      - completed
   push:
     branches:
-      - master
+      - 'master'
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   release:
