@@ -39,7 +39,7 @@ impl HtmlExtractor {
         let re = Regex::new(r#"var current_status = "(.*?)";"#).unwrap();
         match re.captures(text) {
             Some(caps) => match caps.get(1).unwrap().as_str() {
-                "returned_home" => Ok(WorkingStatus::NotWorking),
+                "returned_home" | "having_breakfast" => Ok(WorkingStatus::NotWorking),
                 "working" => Ok(WorkingStatus::Working),
                 "resting" => Ok(WorkingStatus::Resting),
                 _ => anyhow::bail!("Unknown working status"),
