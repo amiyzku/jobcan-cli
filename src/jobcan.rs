@@ -88,24 +88,7 @@ impl Jobcan {
             .await
             .expect("Failed to request work end");
 
-        if let Some(content_type) = res.headers().get("content-type") {
-            if content_type != "application/json" {
-                anyhow::bail!("Failed to stamp");
-            }
-
-            let json = res
-                .json::<stamp_type::Response>()
-                .await
-                .expect("Failed to parse response to json");
-
-            if json == stamp_type.expected_response() {
-                Ok(())
-            } else {
-                anyhow::bail!("Failed to stamp");
-            }
-        } else {
-            anyhow::bail!("Failed to stamp");
-        }
+        self.handle_stamp_response(res, stamp_type).await
     }
 
     pub async fn work_status(&self) -> Result<WorkingStatus> {
@@ -155,6 +138,27 @@ impl Jobcan {
             Err(e) => {
                 anyhow::bail!("Failed to get employee page: {}", e);
             }
+        }
+    }
+
+    async fn handle_stamp_response(&self, res: Response, stamp_type: StampType) -> Result<()> {
+        if let Some(content_type) = res.headers().get("content-type") {
+            if content_type != "application/json" {
+                anyhow::bail!("Failed to stamp");
+            }
+
+            let json = res
+                .json::<stamp_type::Response>()
+                .await
+                .expect("Failed to parse response to json");
+
+            if json == stamp_type.expected_response() {
+                Ok(())
+            } else {
+                anyhow::bail!("Failed to stamp");
+            }
+        } else {
+            anyhow::bail!("Failed to stamp");
         }
     }
 }

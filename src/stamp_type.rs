@@ -1,5 +1,6 @@
 use serde::Deserialize;
 
+#[derive(Debug, PartialEq, Eq)]
 pub enum StampType {
     ClockIn,
     ClockOut,
