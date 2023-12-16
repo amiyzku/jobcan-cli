@@ -43,9 +43,11 @@ impl StampType {
     }
 }
 
-#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Deserialize)]
 pub struct Response {
+    #[allow(dead_code)] // Note: Use json deserialization
     result: i32,
+    #[allow(dead_code)] // Note: Use json deserialization
     state: i32,
     current_status: String,
 }
@@ -57,5 +59,12 @@ impl Default for Response {
             state: 0,
             current_status: "".to_string(),
         }
+    }
+}
+
+impl PartialEq for Response {
+    fn eq(&self, other: &Self) -> bool {
+        // Note: Ignore `self.result` and `self.state`
+        self.current_status == other.current_status
     }
 }
