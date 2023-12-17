@@ -50,7 +50,16 @@ jobs:
           name: ${{ matrix.config.target }}
           path: target/${{ matrix.config.target }}/release/jobcan
 
+      - name: Zip binary
+        run: |
+          tar -czf jobcan-${{ matrix.config.target }}.tar.gz target/${{ matrix.config.target }}/release/jobcan
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/${{ matrix.config.target }}/release/jobcan
+          files: |
+            jobcan-${{ matrix.config.target }}.tar.gz
+          draft: true
+          token: ${{ secrets.TOKEN_FOR_RELEASE }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
