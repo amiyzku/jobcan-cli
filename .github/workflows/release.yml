@@ -44,7 +44,13 @@ jobs:
           cargo install cross
           cross build --release --target ${{ matrix.config.target }}
 
-      - uses: actions/upload-artifact@v3
+      - name: Upload binary
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.config.target }}
           path: target/${{ matrix.config.target }}/release/jobcan
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.config.target }}/release/jobcan
