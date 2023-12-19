@@ -24,10 +24,10 @@ Options:
 
 Run 'jobcan \<COMMAND> --help' for more information on a command.
 
-E.g. 'jobcan work-start --help'
+E.g. 'jobcan clock-in --help'
 
 ```bash
-$ jobcan work-start --help
+$ jobcan clock-in --help
 Login to Jobcan and clock in
 
 Usage: jobcan clock-in [OPTIONS]
