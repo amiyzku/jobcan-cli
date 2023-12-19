@@ -11,7 +11,7 @@ path = "src/main.rs"
 reqwest = { version = "0.11.22", default-features = false, features = [
   "cookies",
   "json",
-  "rustls-tls",
+  "native-tls-vendored",
 ] }
 anyhow = "1.0.75"
 tokio = { version = "1.35.0", features = ["full"] }
@@ -19,5 +19,4 @@ scraper = "0.18.1"
 clap = { version = "4.4.11", features = ["derive", "env"] }
 regex = "1.10.2"
 serde = { version = "1.0.193", features = ["derive"] }
-openssl = { version = "0.10", features = ["vendored"] }
 thiserror = "1.0.51"
