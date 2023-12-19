@@ -12,7 +12,7 @@ pub enum SubCommand {
     #[clap(about = "Login to Jobcan and clock in")]
     ClockIn {
         #[clap(flatten)]
-        account_option: Account,
+        credentials: Credentials,
 
         #[clap(flatten)]
         group_id: GroupID,
@@ -27,7 +27,7 @@ pub enum SubCommand {
     #[clap(about = "Login to Jobcan and clock out")]
     ClockOut {
         #[clap(flatten)]
-        account_option: Account,
+        credentials: Credentials,
 
         #[clap(flatten)]
         group_id: GroupID,
@@ -42,7 +42,7 @@ pub enum SubCommand {
     #[clap(about = "Login to Jobcan and start break")]
     StartBreak {
         #[clap(flatten)]
-        account_option: Account,
+        credentials: Credentials,
 
         #[clap(flatten)]
         group_id: GroupID,
@@ -57,7 +57,7 @@ pub enum SubCommand {
     #[clap(about = "Login to Jobcan and end break")]
     EndBreak {
         #[clap(flatten)]
-        account_option: Account,
+        credentials: Credentials,
 
         #[clap(flatten)]
         group_id: GroupID,
@@ -70,14 +70,14 @@ pub enum SubCommand {
     },
 
     #[clap(about = "Login to Jobcan and get current working status")]
-    Status(Account),
+    Status(Credentials),
 
     #[clap(about = "Login to Jobcan and list groups which you belong to")]
-    ListGroups(Account),
+    ListGroups(Credentials),
 }
 
 #[derive(Debug, Args)]
-pub struct Account {
+pub struct Credentials {
     #[clap(
         short,
         long,

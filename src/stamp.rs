@@ -3,50 +3,50 @@ use std::fmt::Display;
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum StampType {
+pub enum Stamp {
     ClockIn,
     ClockOut,
     StartBreak,
     EndBreak,
 }
 
-impl Display for StampType {
+impl Display for Stamp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            StampType::ClockIn => "ClockIn",
-            StampType::ClockOut => "ClockOut",
-            StampType::StartBreak => "StartBreak",
-            StampType::EndBreak => "EndBreak",
+            Stamp::ClockIn => "ClockIn",
+            Stamp::ClockOut => "ClockOut",
+            Stamp::StartBreak => "StartBreak",
+            Stamp::EndBreak => "EndBreak",
         };
         write!(f, "{}", s)
     }
 }
 
-impl StampType {
+impl Stamp {
     pub fn to_request_params(&self) -> String {
         match self {
-            StampType::ClockIn => "work_start".to_string(),
-            StampType::ClockOut => "work_end".to_string(),
-            StampType::StartBreak => "rest_start".to_string(),
-            StampType::EndBreak => "rest_end".to_string(),
+            Stamp::ClockIn => "work_start".to_string(),
+            Stamp::ClockOut => "work_end".to_string(),
+            Stamp::StartBreak => "rest_start".to_string(),
+            Stamp::EndBreak => "rest_end".to_string(),
         }
     }
     pub fn expected_response(&self) -> Response {
         // Note: Ignore `Response.result` and `Response.state`
         match self {
-            StampType::ClockIn => Response {
+            Stamp::ClockIn => Response {
                 current_status: "working".to_string(),
                 ..Default::default()
             },
-            StampType::ClockOut => Response {
+            Stamp::ClockOut => Response {
                 current_status: "returned_home".to_string(),
                 ..Default::default()
             },
-            StampType::StartBreak => Response {
+            Stamp::StartBreak => Response {
                 current_status: "resting".to_string(),
                 ..Default::default()
             },
-            StampType::EndBreak => Response {
+            Stamp::EndBreak => Response {
                 current_status: "working".to_string(),
                 ..Default::default()
             },

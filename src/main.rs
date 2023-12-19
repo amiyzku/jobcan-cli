@@ -3,7 +3,7 @@ mod cli;
 mod error;
 mod html_extractor;
 mod jobcan;
-mod stamp_type;
+mod stamp;
 mod working_status;
 
 use std::process::exit;
@@ -11,7 +11,7 @@ use std::process::exit;
 use account::Account;
 use clap::Parser;
 use jobcan::Jobcan;
-use stamp_type::StampType;
+use stamp::Stamp;
 
 #[tokio::main]
 async fn main() {
@@ -19,74 +19,46 @@ async fn main() {
 
     match cli.sub_command {
         cli::SubCommand::ClockIn {
-            account_option,
+            credentials,
             group_id,
             night_shift,
             note,
             ..
         } => {
-            run_stamp(
-                account_option,
-                group_id,
-                night_shift,
-                note,
-                StampType::ClockIn,
-            )
-            .await;
+            run_stamp(credentials, group_id, night_shift, note, Stamp::ClockIn).await;
         }
         cli::SubCommand::ClockOut {
-            account_option,
+            credentials,
             group_id,
             night_shift,
             note,
             ..
         } => {
-            run_stamp(
-                account_option,
-                group_id,
-                night_shift,
-                note,
-                StampType::ClockOut,
-            )
-            .await;
+            run_stamp(credentials, group_id, night_shift, note, Stamp::ClockOut).await;
         }
         cli::SubCommand::StartBreak {
-            account_option,
+            credentials,
             group_id,
             night_shift,
             note,
             ..
         } => {
-            run_stamp(
-                account_option,
-                group_id,
-                night_shift,
-                note,
-                StampType::StartBreak,
-            )
-            .await;
+            run_stamp(credentials, group_id, night_shift, note, Stamp::StartBreak).await;
         }
         cli::SubCommand::EndBreak {
-            account_option,
+            credentials,
             group_id,
             night_shift,
             note,
             ..
         } => {
-            run_stamp(
-                account_option,
-                group_id,
-                night_shift,
-                note,
-                StampType::EndBreak,
-            )
-            .await;
+            run_stamp(credentials, group_id, night_shift, note, Stamp::EndBreak).await;
         }
-        cli::SubCommand::Status(account_option) => {
-            run_status(account_option).await;
+        cli::SubCommand::Status(credentials) => {
+            run_status(credentials).await;
         }
-        cli::SubCommand::ListGroups(account_option) => {
-            run_list_groups(account_option).await;
+        cli::SubCommand::ListGroups(credentials) => {
+            run_list_groups(credentials).await;
         }
     };
 
@@ -94,13 +66,13 @@ async fn main() {
 }
 
 async fn run_stamp(
-    account_option: cli::Account,
+    credentials: cli::Credentials,
     group_id: cli::GroupID,
     night_shift: cli::NightShift,
     note: cli::Notes,
-    stamp_type: StampType,
+    stamp_type: Stamp,
 ) {
-    let account = account_from_cli(account_option);
+    let account = account_from_cli(credentials);
     let jobcan = Jobcan::new(account);
 
     jobcan.login().await.unwrap_or_else(|e| {
@@ -127,8 +99,8 @@ async fn run_stamp(
         });
 }
 
-async fn run_status(account_option: cli::Account) {
-    let account = account_from_cli(account_option);
+async fn run_status(credentials: cli::Credentials) {
+    let account = account_from_cli(credentials);
     let jobcan = Jobcan::new(account);
 
     jobcan.login().await.unwrap_or_else(|e| {
@@ -144,8 +116,8 @@ async fn run_status(account_option: cli::Account) {
     println!("{}", status);
 }
 
-async fn run_list_groups(account_option: cli::Account) {
-    let account = account_from_cli(account_option);
+async fn run_list_groups(credentials: cli::Credentials) {
+    let account = account_from_cli(credentials);
     let jobcan = Jobcan::new(account);
 
     jobcan.login().await.unwrap_or_else(|e| {
@@ -163,27 +135,27 @@ async fn run_list_groups(account_option: cli::Account) {
     }
 }
 
-fn account_from_cli(account_option: cli::Account) -> Account {
-    match account_option {
-        cli::Account {
+fn account_from_cli(credentials: cli::Credentials) -> Account {
+    match credentials {
+        cli::Credentials {
             email: Some(email),
             password: Some(password),
         } => Account::new(email, password),
-        cli::Account {
+        cli::Credentials {
             email: Some(_),
             password: None,
         } => {
             eprintln!("jobcan password is required.");
             exit(1);
         }
-        cli::Account {
+        cli::Credentials {
             email: None,
             password: Some(_),
         } => {
             eprintln!("jobcan email is required.");
             exit(1);
         }
-        cli::Account {
+        cli::Credentials {
             email: None,
             password: None,
         } => {

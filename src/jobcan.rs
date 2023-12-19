@@ -4,7 +4,7 @@ use crate::{
     account::Account,
     error::JobcanError,
     html_extractor::{Group, HtmlExtractor},
-    stamp_type::{self, StampType},
+    stamp::{self, Stamp},
     working_status::WorkingStatus,
 };
 
@@ -68,7 +68,7 @@ impl Jobcan {
 
     pub async fn stamp(
         &self,
-        stamp_type: StampType,
+        stamp_type: Stamp,
         group_id: &str,
         is_night_shift: bool,
         note: &str,
@@ -165,7 +165,7 @@ impl Jobcan {
     async fn handle_stamp_response(
         &self,
         res: Response,
-        stamp_type: StampType,
+        stamp_type: Stamp,
     ) -> Result<(), JobcanError> {
         let content_type = res.headers().get("content-type").expect("No content-type");
         if content_type != "application/json" {
@@ -177,14 +177,14 @@ impl Jobcan {
             });
         }
 
-        let json =
-            res.json::<stamp_type::Response>()
-                .await
-                .map_err(|e| JobcanError::ReqwestError {
-                    message: "Failed to parse response".into(),
-                    url: Self::STAMP_URL.into(),
-                    raw_error: e,
-                })?;
+        let json = res
+            .json::<stamp::Response>()
+            .await
+            .map_err(|e| JobcanError::ReqwestError {
+                message: "Failed to parse response".into(),
+                url: Self::STAMP_URL.into(),
+                raw_error: e,
+            })?;
 
         if json == stamp_type.expected_response() {
             Ok(())
