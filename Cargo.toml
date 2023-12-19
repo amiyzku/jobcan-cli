@@ -20,3 +20,4 @@ clap = { version = "4.4.11", features = ["derive", "env"] }
 regex = "1.10.2"
 serde = { version = "1.0.193", features = ["derive"] }
 openssl = { version = "0.10", features = ["vendored"] }
+thiserror = "1.0.51"
