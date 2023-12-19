@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -6,6 +8,18 @@ pub enum StampType {
     ClockOut,
     StartBreak,
     EndBreak,
+}
+
+impl Display for StampType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            StampType::ClockIn => "ClockIn",
+            StampType::ClockOut => "ClockOut",
+            StampType::StartBreak => "StartBreak",
+            StampType::EndBreak => "EndBreak",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 impl StampType {
@@ -17,9 +31,6 @@ impl StampType {
             StampType::EndBreak => "rest_end".to_string(),
         }
     }
-}
-
-impl StampType {
     pub fn expected_response(&self) -> Response {
         // Note: Ignore `Response.result` and `Response.state`
         match self {

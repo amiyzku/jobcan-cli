@@ -1,8 +1,7 @@
-use anyhow::Result;
 use regex::Regex;
 use scraper::Html;
 
-use crate::working_status::WorkingStatus;
+use crate::{error::JobcanError, working_status::WorkingStatus};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Group {
@@ -23,69 +22,93 @@ impl Group {
 pub struct HtmlExtractor {}
 
 impl HtmlExtractor {
-    pub fn authenticity_token(html: &Html) -> Result<String> {
+    pub fn authenticity_token(html: &Html) -> Result<String, JobcanError> {
         let token = html
             .select(&scraper::Selector::parse("input[name=authenticity_token]").unwrap())
             .next()
-            .expect("Failed to find authenticity_token")
+            .ok_or_else(|| JobcanError::ElementExtractError {
+                message: "Failed to find `input[name=authenticity_token]`".into(),
+            })?
             .value()
             .attr("value")
-            .expect("Failed to get value of authenticity_token")
+            .ok_or_else(|| JobcanError::ElementExtractError {
+                message: "Failed to get value of `input[name=authenticity_token]`".into(),
+            })?
             .to_string();
         Ok(token)
     }
 
-    pub fn working_status(text: &str) -> Result<WorkingStatus> {
+    pub fn working_status(text: &str) -> Result<WorkingStatus, JobcanError> {
         let re = Regex::new(r#"var current_status = "(.*?)";"#).unwrap();
         match re.captures(text) {
             Some(caps) => match caps.get(1).unwrap().as_str() {
                 "returned_home" | "having_breakfast" => Ok(WorkingStatus::NotWorking),
                 "working" => Ok(WorkingStatus::Working),
                 "resting" => Ok(WorkingStatus::Resting),
-                _ => anyhow::bail!("Unknown working status"),
+                _ => Err(JobcanError::UnexpectedResponseError {
+                    message: "Failed to get working status".into(),
+                }),
             },
-            None => anyhow::bail!("Failed to get working status"),
+            None => Err(JobcanError::UnexpectedResponseError {
+                message: "Failed to get working status".into(),
+            }),
         }
     }
 
-    pub fn token(html: &Html) -> Result<String> {
+    pub fn token(html: &Html) -> Result<String, JobcanError> {
         let token = html
             .select(&scraper::Selector::parse("input[name=token]").unwrap())
             .next()
-            .expect("Failed to find token")
+            .ok_or_else(|| JobcanError::ElementExtractError {
+                message: "Failed to find `input[name=token]`".into(),
+            })?
             .value()
             .attr("value")
-            .expect("Failed to get value of token")
+            .ok_or_else(|| JobcanError::ElementExtractError {
+                message: "Failed to get value of `input[name=token]`".into(),
+            })?
             .to_string();
         Ok(token)
     }
 
-    pub fn groups(html: &Html) -> Result<Vec<Group>> {
+    pub fn groups(html: &Html) -> Result<Vec<Group>, JobcanError> {
         let selector = scraper::Selector::parse("#adit_group_id > option").unwrap();
         let options = html.select(&selector);
-        let group_ids = options
-            .map(|option| {
-                let id = option
-                    .value()
-                    .attr("value")
-                    .expect("Failed to get value of group id")
-                    .to_string();
-                let name = option
-                    .text()
-                    .next()
-                    .expect("Failed to get value of group name")
-                    .to_string();
-                Group { id, name }
-            })
-            .collect();
+
+        let mut group_ids = Vec::new();
+        for option in options {
+            let id = option
+                .value()
+                .attr("value")
+                .ok_or_else(|| JobcanError::ElementExtractError {
+                    message: "Failed to get value of group id".into(),
+                })?
+                .to_string();
+            let name = option
+                .text()
+                .next()
+                .ok_or_else(|| JobcanError::ElementExtractError {
+                    message: "Failed to get value of group name".into(),
+                })?
+                .to_string();
+            group_ids.push(Group { id, name });
+        }
+
         Ok(group_ids)
     }
 
-    pub fn default_group_id(text: &str) -> Result<String> {
+    pub fn default_group_id(text: &str) -> Result<String, JobcanError> {
         let re = Regex::new(r#"var defaultAditGroupId = (.*?);"#).unwrap();
         match re.captures(text) {
-            Some(caps) => Ok(caps.get(1).unwrap().as_str().to_string()),
-            None => anyhow::bail!("Failed to get default id"),
+            Some(caps) => match caps.get(1) {
+                Some(group_id) => Ok(group_id.as_str().to_string()),
+                None => Err(JobcanError::UnexpectedResponseError {
+                    message: "Failed to get default id".into(),
+                }),
+            },
+            None => Err(JobcanError::ElementExtractError {
+                message: "Failed to get default id".into(),
+            }),
         }
     }
 }

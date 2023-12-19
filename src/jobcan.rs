@@ -1,8 +1,8 @@
-use anyhow::Result;
 use reqwest::Response;
 
 use crate::{
     account::Account,
+    error::JobcanError,
     html_extractor::{Group, HtmlExtractor},
     stamp_type::{self, StampType},
     working_status::WorkingStatus,
@@ -28,9 +28,13 @@ impl Jobcan {
         }
     }
 
-    pub async fn login(&self) -> Result<()> {
+    pub async fn login(&self) -> Result<(), JobcanError> {
         let res = self.fetch_login_page().await?;
-        let body = res.text().await.expect("Failed to get response body");
+        let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
+            message: "Failed to get contents in login page".into(),
+            url: Self::LOGIN_URL.into(),
+            raw_error: e,
+        })?;
         let html = scraper::Html::parse_document(&body);
 
         let token = HtmlExtractor::authenticity_token(&html)?;
@@ -49,12 +53,16 @@ impl Jobcan {
             .form(&params)
             .send()
             .await
-            .expect("Failed to login request");
+            .map_err(|e| JobcanError::ReqwestError {
+                message: "Failed to request login".into(),
+                url: Self::LOGIN_URL.into(),
+                raw_error: e,
+            })?;
 
         if res.url().path() == "/employee" {
             Ok(())
         } else {
-            anyhow::bail!("Login failed");
+            Err(JobcanError::AuthError.into())
         }
     }
 
@@ -64,9 +72,13 @@ impl Jobcan {
         group_id: &str,
         is_night_shift: bool,
         note: &str,
-    ) -> Result<()> {
+    ) -> Result<(), JobcanError> {
         let res = self.fetch_employee_page().await?;
-        let body = res.text().await.expect("Failed to get response body");
+        let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
+            message: "Failed to get contents in employee page".into(),
+            url: Self::EMPLOYEE_URL.into(),
+            raw_error: e,
+        })?;
         let html = scraper::Html::parse_document(&body);
 
         let token = HtmlExtractor::token(&html)?;
@@ -86,79 +98,104 @@ impl Jobcan {
             .form(&params)
             .send()
             .await
-            .expect("Failed to request work end");
+            .map_err(|e| JobcanError::ReqwestError {
+                message: format!("Failed to request {}", stamp_type),
+                url: Self::STAMP_URL.into(),
+                raw_error: e,
+            })?;
 
         self.handle_stamp_response(res, stamp_type).await
     }
 
-    pub async fn work_status(&self) -> Result<WorkingStatus> {
-        let res = self
-            .fetch_employee_page()
-            .await
-            .expect("Failed to get attendance page");
-        let body = res.text().await.expect("Failed to get response body");
-        let status = HtmlExtractor::working_status(&body).expect("Failed to get working status");
-
-        Ok(status)
+    pub async fn work_status(&self) -> Result<WorkingStatus, JobcanError> {
+        let res = self.fetch_employee_page().await?;
+        let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
+            message: "Failed to get contents in employee page".into(),
+            url: Self::EMPLOYEE_URL.into(),
+            raw_error: e,
+        })?;
+        HtmlExtractor::working_status(&body)
     }
 
-    pub async fn list_groups(&self) -> Result<Vec<Group>> {
+    pub async fn list_groups(&self) -> Result<Vec<Group>, JobcanError> {
         let res = self.fetch_employee_page().await?;
-        let body = res.text().await.expect("Failed to get response body");
+        let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
+            message: "Failed to get contents in employee page".into(),
+            url: Self::EMPLOYEE_URL.into(),
+            raw_error: e,
+        })?;
         let html = scraper::Html::parse_document(&body);
-
-        let groups = HtmlExtractor::groups(&html)?;
-
-        Ok(groups)
+        HtmlExtractor::groups(&html)
     }
 
-    pub async fn default_group_id(&self) -> Result<String> {
+    pub async fn default_group_id(&self) -> Result<String, JobcanError> {
         let res = self.fetch_employee_page().await?;
-        let body = res.text().await.expect("Failed to get response body");
-
-        let group_id = HtmlExtractor::default_group_id(&body)?;
-
-        Ok(group_id)
+        let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
+            message: "Failed to get contents in employee page".into(),
+            url: Self::EMPLOYEE_URL.into(),
+            raw_error: e,
+        })?;
+        HtmlExtractor::default_group_id(&body)
     }
 
-    async fn fetch_login_page(&self) -> Result<Response> {
-        let res = self.http_client.get(Self::LOGIN_URL).send().await;
-        match res {
-            Ok(res) => Ok(res),
-            Err(e) => {
-                anyhow::bail!("Failed to get login page: {}", e);
-            }
+    async fn fetch_login_page(&self) -> Result<Response, JobcanError> {
+        self.http_client
+            .get(Self::LOGIN_URL)
+            .send()
+            .await
+            .map_err(|e| JobcanError::ReqwestError {
+                message: "Failed to request login page".into(),
+                url: Self::LOGIN_URL.into(),
+                raw_error: e,
+            })
+    }
+
+    async fn fetch_employee_page(&self) -> Result<Response, JobcanError> {
+        self.http_client
+            .get(Self::EMPLOYEE_URL)
+            .send()
+            .await
+            .map_err(|e| JobcanError::ReqwestError {
+                message: "Failed to request employee page".into(),
+                url: Self::EMPLOYEE_URL.into(),
+                raw_error: e,
+            })
+    }
+
+    async fn handle_stamp_response(
+        &self,
+        res: Response,
+        stamp_type: StampType,
+    ) -> Result<(), JobcanError> {
+        let content_type = res.headers().get("content-type").expect("No content-type");
+        if content_type != "application/json" {
+            return Err(JobcanError::UnexpectedResponseError {
+                message: format!(
+                    "Unexpected content-type found: expected application/json, got `{:?}`",
+                    content_type
+                ),
+            });
         }
-    }
 
-    async fn fetch_employee_page(&self) -> Result<Response> {
-        let res = self.http_client.get(Self::EMPLOYEE_URL).send().await;
-        match res {
-            Ok(res) => Ok(res),
-            Err(e) => {
-                anyhow::bail!("Failed to get employee page: {}", e);
-            }
-        }
-    }
-
-    async fn handle_stamp_response(&self, res: Response, stamp_type: StampType) -> Result<()> {
-        if let Some(content_type) = res.headers().get("content-type") {
-            if content_type != "application/json" {
-                anyhow::bail!("Failed to stamp");
-            }
-
-            let json = res
-                .json::<stamp_type::Response>()
+        let json =
+            res.json::<stamp_type::Response>()
                 .await
-                .expect("Failed to parse response to json");
+                .map_err(|e| JobcanError::ReqwestError {
+                    message: "Failed to parse response".into(),
+                    url: Self::STAMP_URL.into(),
+                    raw_error: e,
+                })?;
 
-            if json == stamp_type.expected_response() {
-                Ok(())
-            } else {
-                anyhow::bail!("Failed to stamp");
-            }
+        if json == stamp_type.expected_response() {
+            Ok(())
         } else {
-            anyhow::bail!("Failed to stamp");
+            Err(JobcanError::UnexpectedResponseError {
+                message: format!(
+                    "Unexpected response found: expected `{:?}`, got `{:?}`",
+                    stamp_type.expected_response(),
+                    json
+                ),
+            })
         }
     }
 }

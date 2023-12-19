@@ -1,5 +1,6 @@
 mod account;
 mod cli;
+mod error;
 mod html_extractor;
 mod jobcan;
 mod stamp_type;
@@ -102,14 +103,17 @@ async fn run_stamp(
     let account = account_from_cli(account_option);
     let jobcan = Jobcan::new(account);
 
-    jobcan.login().await.expect("Failed to login");
+    jobcan.login().await.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        exit(1);
+    });
 
     let group_id: String = match group_id.group_id {
         Some(group_id) => group_id,
-        None => jobcan
-            .default_group_id()
-            .await
-            .expect("Failed to get default group id"),
+        None => jobcan.default_group_id().await.unwrap_or_else(|e| {
+            eprintln!("{}", e);
+            exit(1);
+        }),
     };
 
     let note: String = note.into();
@@ -117,19 +121,25 @@ async fn run_stamp(
     jobcan
         .stamp(stamp_type, &group_id, night_shift.into(), &note)
         .await
-        .expect("Failed to stamp");
+        .unwrap_or_else(|e| {
+            eprintln!("{}", e);
+            exit(1);
+        });
 }
 
 async fn run_status(account_option: cli::Account) {
     let account = account_from_cli(account_option);
     let jobcan = Jobcan::new(account);
 
-    jobcan.login().await.expect("Failed to login");
+    jobcan.login().await.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        exit(1);
+    });
 
-    let status = jobcan
-        .work_status()
-        .await
-        .expect("Failed to get work status");
+    let status = jobcan.work_status().await.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        exit(1);
+    });
 
     println!("{}", status);
 }
@@ -138,12 +148,15 @@ async fn run_list_groups(account_option: cli::Account) {
     let account = account_from_cli(account_option);
     let jobcan = Jobcan::new(account);
 
-    jobcan.login().await.expect("Failed to login");
+    jobcan.login().await.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        exit(1);
+    });
 
-    let groups = jobcan
-        .list_groups()
-        .await
-        .expect("Failed to get group list");
+    let groups = jobcan.list_groups().await.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        exit(1);
+    });
 
     for group in groups {
         println!("GroupID:{}, GroupName:{}", group.id(), group.name());
