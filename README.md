@@ -37,9 +37,9 @@ Options:
   -V, --version  Print version
 ```
 
-Run 'jobcan \<COMMAND> --help' for more information on a command.
+Run `jobcan <COMMAND> --help` for more information on a command.
 
-E.g. 'jobcan clock-in --help'
+E.g. `jobcan clock-in --help`
 
 ```plaintext
 $ jobcan clock-in --help
