@@ -1,6 +1,10 @@
-# Jobcan-cli
+<h1 align="center">
+  Jobcan-cli
+</h1>
 
-A command line tool to operate Jobcan.
+<h4 align="center">
+  A command line tool to operate Jobcan.
+</h1>
 
 <div align="center">
 <a href="https://github.com/amiyzku/jobcan-cli/releases/latest">
