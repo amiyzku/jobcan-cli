@@ -6,6 +6,7 @@ use crate::{
     html_extractor::{Group, HtmlExtractor},
     stamp::{self, Stamp},
     working_status::WorkingStatus,
+    Result,
 };
 
 pub struct Jobcan {
@@ -28,7 +29,7 @@ impl Jobcan {
         }
     }
 
-    pub async fn login(&self) -> Result<(), JobcanError> {
+    pub async fn login(&self) -> Result<()> {
         let res = self.fetch_login_page().await?;
         let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
             message: "Failed to get contents in login page".into(),
@@ -72,7 +73,7 @@ impl Jobcan {
         group_id: &str,
         is_night_shift: bool,
         note: &str,
-    ) -> Result<(), JobcanError> {
+    ) -> Result<()> {
         let res = self.fetch_employee_page().await?;
         let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
             message: "Failed to get contents in employee page".into(),
@@ -107,7 +108,7 @@ impl Jobcan {
         self.handle_stamp_response(res, stamp_type).await
     }
 
-    pub async fn work_status(&self) -> Result<WorkingStatus, JobcanError> {
+    pub async fn work_status(&self) -> Result<WorkingStatus> {
         let res = self.fetch_employee_page().await?;
         let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
             message: "Failed to get contents in employee page".into(),
@@ -117,7 +118,7 @@ impl Jobcan {
         HtmlExtractor::working_status(&body)
     }
 
-    pub async fn list_groups(&self) -> Result<Vec<Group>, JobcanError> {
+    pub async fn list_groups(&self) -> Result<Vec<Group>> {
         let res = self.fetch_employee_page().await?;
         let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
             message: "Failed to get contents in employee page".into(),
@@ -128,7 +129,7 @@ impl Jobcan {
         HtmlExtractor::groups(&html)
     }
 
-    pub async fn default_group_id(&self) -> Result<String, JobcanError> {
+    pub async fn default_group_id(&self) -> Result<String> {
         let res = self.fetch_employee_page().await?;
         let body = res.text().await.map_err(|e| JobcanError::ReqwestError {
             message: "Failed to get contents in employee page".into(),
@@ -138,7 +139,7 @@ impl Jobcan {
         HtmlExtractor::default_group_id(&body)
     }
 
-    async fn fetch_login_page(&self) -> Result<Response, JobcanError> {
+    async fn fetch_login_page(&self) -> Result<Response> {
         self.http_client
             .get(Self::LOGIN_URL)
             .send()
@@ -150,7 +151,7 @@ impl Jobcan {
             })
     }
 
-    async fn fetch_employee_page(&self) -> Result<Response, JobcanError> {
+    async fn fetch_employee_page(&self) -> Result<Response> {
         self.http_client
             .get(Self::EMPLOYEE_URL)
             .send()
@@ -162,11 +163,7 @@ impl Jobcan {
             })
     }
 
-    async fn handle_stamp_response(
-        &self,
-        res: Response,
-        stamp_type: Stamp,
-    ) -> Result<(), JobcanError> {
+    async fn handle_stamp_response(&self, res: Response, stamp_type: Stamp) -> Result<()> {
         let content_type = res.headers().get("content-type").expect("No content-type");
         if content_type != "application/json" {
             return Err(JobcanError::UnexpectedResponseError {

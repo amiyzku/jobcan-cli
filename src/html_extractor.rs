@@ -1,7 +1,7 @@
 use regex::Regex;
 use scraper::Html;
 
-use crate::{error::JobcanError, working_status::WorkingStatus};
+use crate::{error::JobcanError, working_status::WorkingStatus, Result};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Group {
@@ -22,7 +22,7 @@ impl Group {
 pub struct HtmlExtractor {}
 
 impl HtmlExtractor {
-    pub fn authenticity_token(html: &Html) -> Result<String, JobcanError> {
+    pub fn authenticity_token(html: &Html) -> Result<String> {
         let token = html
             .select(&scraper::Selector::parse("input[name=authenticity_token]").unwrap())
             .next()
@@ -38,7 +38,7 @@ impl HtmlExtractor {
         Ok(token)
     }
 
-    pub fn working_status(text: &str) -> Result<WorkingStatus, JobcanError> {
+    pub fn working_status(text: &str) -> Result<WorkingStatus> {
         let re = Regex::new(r#"var current_status = "(.*?)";"#).unwrap();
         match re.captures(text) {
             Some(caps) => match caps.get(1).unwrap().as_str() {
@@ -55,7 +55,7 @@ impl HtmlExtractor {
         }
     }
 
-    pub fn token(html: &Html) -> Result<String, JobcanError> {
+    pub fn token(html: &Html) -> Result<String> {
         let token = html
             .select(&scraper::Selector::parse("input[name=token]").unwrap())
             .next()
@@ -71,7 +71,7 @@ impl HtmlExtractor {
         Ok(token)
     }
 
-    pub fn groups(html: &Html) -> Result<Vec<Group>, JobcanError> {
+    pub fn groups(html: &Html) -> Result<Vec<Group>> {
         let selector = scraper::Selector::parse("#adit_group_id > option").unwrap();
         let options = html.select(&selector);
 
@@ -97,7 +97,7 @@ impl HtmlExtractor {
         Ok(group_ids)
     }
 
-    pub fn default_group_id(text: &str) -> Result<String, JobcanError> {
+    pub fn default_group_id(text: &str) -> Result<String> {
         let re = Regex::new(r#"var defaultAditGroupId = (.*?);"#).unwrap();
         match re.captures(text) {
             Some(caps) => match caps.get(1) {

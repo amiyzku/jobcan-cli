@@ -10,8 +10,11 @@ use std::process::exit;
 
 use account::Account;
 use clap::Parser;
+use error::JobcanError;
 use jobcan::Jobcan;
 use stamp::Stamp;
+
+pub type Result<T> = std::result::Result<T, JobcanError>;
 
 #[tokio::main]
 async fn main() {
