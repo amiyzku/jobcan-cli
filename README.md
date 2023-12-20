@@ -2,9 +2,20 @@
 
 A command line tool to operate Jobcan.
 
+<div align="center">
+<a href="https://github.com/amiyzku/jobcan-cli/releases/latest">
+  <img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/amiyzku/jobcan-cli?style=for-the-badge">
+</a>
+<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/amiyzku/jobcan-cli?style=for-the-badge">
+<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/amiyzku/jobcan-cli?style=for-the-badge">
+<a href="https://github.com/amiyzku/jobcan-cli/blob/master/LICENSE">
+  <img alt="GitHub License" src="https://img.shields.io/github/license/amiyzku/jobcan-cli?style=for-the-badge">
+</a>
+</div>
+
 ## Usage
 
-```bash
+```plaintext
 $ jobcan --help
 Usage: jobcan <COMMAND>
 
@@ -26,7 +37,7 @@ Run 'jobcan \<COMMAND> --help' for more information on a command.
 
 E.g. 'jobcan clock-in --help'
 
-```bash
+```plaintext
 $ jobcan clock-in --help
 Login to Jobcan and clock in
 
