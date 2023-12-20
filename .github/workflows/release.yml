@@ -17,7 +17,7 @@ jobs:
           - { os: macos-latest, target: 'x86_64-apple-darwin' }
           - { os: macos-latest, target: 'aarch64-apple-darwin' }
           # - { os: windows-latest, target: 'x86_64-pc-windows-gnu' }
-          # - { os: windows-latest, target: 'x86_64-pc-windows-msvc' }
+          - { os: windows-latest, target: 'x86_64-pc-windows-msvc' }
 
     runs-on: ${{ matrix.config.os }}
 
@@ -48,19 +48,31 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.config.target }}
-          path: target/${{ matrix.config.target }}/release/jobcan
+          path: |
+            if: matrix.config.os == 'ubuntu-latest' || matrix.config.os == 'macos-latest'
+              target/${{ matrix.config.target }}/release/jobcan
+            if: matrix.config.os == 'windows-latest'
+              target/${{ matrix.config.target }}/release/jobcan.exe
 
-      - name: Zip binary
+      - name: Compress binary for ubuntu and macos
+        if: matrix.config.os == 'ubuntu-latest' || matrix.config.os == 'macos-latest'
         run: |
           cd target/${{ matrix.config.target }}/release
           tar -czf jobcan-${{ matrix.config.target }}.tar.gz jobcan
 
-      - name: Create Release
+      - name: Compress binary for windows
+        if: matrix.config.os == 'windows-latest'
+        run: |
+          cd target/${{ matrix.config.target }}/release
+          Compress-Archive -Path jobcan.exe -Destination jobcan-${{ matrix.config.target }}.zip
+
+      - name: Create release draft
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            jobcan-${{ matrix.config.target }}.tar.gz
+            target/${{ matrix.config.target }}/release/jobcan-${{ matrix.config.target }}.tar.gz
+            target/${{ matrix.config.target }}/release/jobcan-${{ matrix.config.target }}.zip
           draft: true
           token: ${{ secrets.TOKEN_FOR_RELEASE }}
           generate_release_notes: true
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
