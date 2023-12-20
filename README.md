@@ -17,6 +17,18 @@
 </a>
 </div>
 
+## Installation
+
+### Using cargo
+
+```shell
+cargo install jobcan-cli
+```
+
+### Binary Releases
+
+You can download the binary from [releases page](https://github.com/amiyzku/jobcan-cli/releases) and manually install it.
+
 ## Usage
 
 ```plaintext
