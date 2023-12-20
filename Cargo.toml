@@ -19,3 +19,6 @@ clap = { version = "4.4.11", features = ["derive", "env"] }
 regex = "1.10.2"
 serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.51"
+
+[dev-dependencies]
+assert_cmd = "2.0.12"
