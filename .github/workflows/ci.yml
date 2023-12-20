@@ -20,4 +20,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Run tests
+        env:
+          JOBCAN_EMAIL: ${{ secrets.JOBCAN_EMAIL }}
+          JOBCAN_PASSWORD: ${{ secrets.JOBCAN_PASSWORD }}
         run: cargo test --verbose
