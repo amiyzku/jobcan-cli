@@ -16,6 +16,14 @@ use stamp::Stamp;
 
 pub type Result<T> = std::result::Result<T, JobcanError>;
 
+fn success_exit() -> ! {
+    exit(0);
+}
+
+fn error_exit() -> ! {
+    exit(1);
+}
+
 #[tokio::main]
 async fn main() {
     let cli = cli::Cli::parse();
@@ -65,7 +73,7 @@ async fn main() {
         }
     };
 
-    exit(0);
+    success_exit();
 }
 
 async fn run_stamp(
@@ -80,14 +88,14 @@ async fn run_stamp(
 
     jobcan.login().await.unwrap_or_else(|e| {
         eprintln!("{}", e);
-        exit(1);
+        error_exit();
     });
 
     let group_id: String = match group_id.group_id {
         Some(group_id) => group_id,
         None => jobcan.default_group_id().await.unwrap_or_else(|e| {
             eprintln!("{}", e);
-            exit(1);
+            error_exit();
         }),
     };
 
@@ -98,7 +106,7 @@ async fn run_stamp(
         .await
         .unwrap_or_else(|e| {
             eprintln!("{}", e);
-            exit(1);
+            error_exit();
         });
 }
 
@@ -108,12 +116,12 @@ async fn run_status(credentials: cli::Credentials) {
 
     jobcan.login().await.unwrap_or_else(|e| {
         eprintln!("{}", e);
-        exit(1);
+        error_exit();
     });
 
     let status = jobcan.work_status().await.unwrap_or_else(|e| {
         eprintln!("{}", e);
-        exit(1);
+        error_exit();
     });
 
     println!("{}", status);
@@ -125,12 +133,12 @@ async fn run_list_groups(credentials: cli::Credentials) {
 
     jobcan.login().await.unwrap_or_else(|e| {
         eprintln!("{}", e);
-        exit(1);
+        error_exit();
     });
 
     let groups = jobcan.list_groups().await.unwrap_or_else(|e| {
         eprintln!("{}", e);
-        exit(1);
+        error_exit();
     });
 
     for group in groups {
@@ -149,14 +157,14 @@ fn account_from_cli(credentials: cli::Credentials) -> Account {
             password: None,
         } => {
             eprintln!("jobcan password is required.");
-            exit(1);
+            error_exit();
         }
         cli::Credentials {
             email: None,
             password: Some(_),
         } => {
             eprintln!("jobcan email is required.");
-            exit(1);
+            error_exit();
         }
         cli::Credentials {
             email: None,
@@ -164,7 +172,7 @@ fn account_from_cli(credentials: cli::Credentials) -> Account {
         } => {
             eprintln!("jobcan email is required.");
             eprintln!("jobcan password is required.");
-            exit(1);
+            error_exit();
         }
     }
 }
