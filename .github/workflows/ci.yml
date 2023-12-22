@@ -3,10 +3,10 @@ name: CI
 on:
   push:
     branches: ['master']
-    paths: ['*.rs', 'Cargo.toml']
+    paths: ['**/*.rs', 'Cargo.toml']
   pull_request:
     branches: ['master']
-    paths: ['*.rs', 'Cargo.toml']
+    paths: ['**/*.rs', 'Cargo.toml']
   workflow_dispatch:
   schedule:
     # JST 0:00
