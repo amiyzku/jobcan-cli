@@ -10,11 +10,12 @@
 <a href="https://github.com/amiyzku/jobcan-cli/releases/latest">
   <img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/amiyzku/jobcan-cli?style=for-the-badge">
 </a>
-<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/amiyzku/jobcan-cli?style=for-the-badge">
-<img alt="GitHub top language" src="https://img.shields.io/github/languages/top/amiyzku/jobcan-cli?style=for-the-badge">
+<!-- <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/amiyzku/jobcan-cli?style=for-the-badge"> -->
+<!-- <img alt="GitHub top language" src="https://img.shields.io/github/languages/top/amiyzku/jobcan-cli?style=for-the-badge"> -->
 <a href="https://github.com/amiyzku/jobcan-cli/blob/master/LICENSE">
   <img alt="GitHub License" src="https://img.shields.io/github/license/amiyzku/jobcan-cli?style=for-the-badge">
 </a>
+<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/amiyzku/jobcan-cli/ci.yml?style=for-the-badge&label=CI">
 </div>
 
 ## Installation
