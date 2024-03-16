@@ -15,7 +15,9 @@
 <a href="https://github.com/amiyzku/jobcan-cli/blob/master/LICENSE">
   <img alt="GitHub License" src="https://img.shields.io/github/license/amiyzku/jobcan-cli?style=for-the-badge">
 </a>
-<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/amiyzku/jobcan-cli/ci.yml?style=for-the-badge&label=CI">
+<a href="https://github.com/amiyzku/jobcan-cli/actions/workflows/ci.yml">
+  <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/amiyzku/jobcan-cli/ci.yml?style=for-the-badge&label=CI">
+</a>
 </div>
 
 ## Installation
