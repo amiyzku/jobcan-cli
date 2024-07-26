@@ -14,15 +14,18 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
       - uses: Swatinem/rust-cache@v2
 
       - name: Run tests
