@@ -29,6 +29,15 @@ async fn main() {
     let cli = cli::Cli::parse();
 
     match cli.sub_command {
+        cli::SubCommand::Auto {
+            credentials,
+            group_id,
+            night_shift,
+            note,
+            ..
+        } => {
+            run_stamp(credentials, group_id, night_shift, note, Stamp::Auto).await;
+        }
         cli::SubCommand::ClockIn {
             credentials,
             group_id,

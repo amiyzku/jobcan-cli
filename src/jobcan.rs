@@ -183,7 +183,10 @@ impl Jobcan {
                 raw_error: e,
             })?;
 
-        if json == stamp_type.expected_response() {
+        if stamp_type
+            .expected_response()
+            .map_or(true, |expected| json == expected)
+        {
             Ok(())
         } else {
             Err(JobcanError::UnexpectedResponseError {

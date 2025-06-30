@@ -39,6 +39,7 @@ $ jobcan --help
 Usage: jobcan <COMMAND>
 
 Commands:
+  auto         Login to Jobcan and auto-detect clock in/out
   clock-in     Login to Jobcan and clock in
   clock-out    Login to Jobcan and clock out
   start-break  Login to Jobcan and start break

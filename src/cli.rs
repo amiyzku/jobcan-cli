@@ -9,6 +9,21 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum SubCommand {
+    #[clap(about = "Login to Jobcan and auto-detect clock in/out")]
+    Auto {
+        #[clap(flatten)]
+        credentials: Credentials,
+
+        #[clap(flatten)]
+        group_id: GroupID,
+
+        #[clap(flatten)]
+        night_shift: NightShift,
+
+        #[clap(flatten)]
+        note: Notes,
+    },
+
     #[clap(about = "Login to Jobcan and clock in")]
     ClockIn {
         #[clap(flatten)]
